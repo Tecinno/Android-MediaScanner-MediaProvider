@@ -216,7 +216,8 @@ public class MediaProvider extends ContentProvider {
         }
 
         Cursor c = qb.query(db, projection, selection, selectionArgs,null, null, sortOrder);
-
+        if (c == null)
+            return null;
         /**
          * 注册内容URI变化的监听器
          */

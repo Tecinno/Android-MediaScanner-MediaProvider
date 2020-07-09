@@ -46,11 +46,12 @@ namespace android {
         static int callback(void *data, int args_num, char **columnValue, char **columnName);
 
     private:
+        void prescan();
         int creat_database(sqlite3* &db);
         sqlite3 * open_database();
         bool scanFile(sqlite3 *db,const  char* path, mediaType type, int parentId, const int dirLayer);
         int checkFileNeedUpdate(const char* path, int mtime, mediaType type);
-        sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg);
+        sqlite3_stmt* queryData(const char* table, const char* projection[], const char* selection, const char* selectArg);
         bool updateFolderHaveMedia(sqlite3 *db, int id, mediaType type);
         bool delete_old_data(std::string& list);
 

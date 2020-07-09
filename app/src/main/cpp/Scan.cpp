@@ -262,9 +262,23 @@ namespace android{
 /*
 delete the older data
 */
-    void prescan() {
+     void Scan::prescan() {
+        const char* projection[2] = {"_id", "_path"};
+        sqlite3_stmt* stmt = queryData("audio", projection, NULL, NULL);
+        if (stmt == NULL) {
+            printf("checkFileNeedUpdate stmt == NULL\n");
+            sqlite3_finalize(stmt);
+            return ;
+        }
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
 
+            if (id > 0) {
+                int oldMtime = sqlite3_column_int(stmt, 1);
 
+            }
+        }
+        sqlite3_finalize(stmt);
 
     }
 
@@ -309,7 +323,7 @@ delete the older data
     }
 
 
-    sqlite3_stmt* Scan::queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg) {
+    sqlite3_stmt* Scan::queryData(const char* table, const char* projection[], const char* selection, const char* selectArg) {
 //        sqlite3 *db = open_database();
         if (mdb == NULL){
             printf("mdb == NULL\n");
@@ -323,18 +337,21 @@ delete the older data
         // sql = "select projection[] from table where selection = selectArg";
         std::string sql = "select ";
         sql.append(projection[0]);
-
+        int projectionSize = sizeof(projection)/sizeof(projection[0]);
         for (int i = 1; i < projectionSize; ++i) {
             sql.append(",");
             sql.append(projection[i]);
         }
         sql.append(" from ");
         sql.append(table);
-        sql.append(" where ");
-        sql.append(selection);
-        sql.append(" = '");
-        sql.append(selectArg);
-        sql.append("'");
+        if (selection != NULL) {
+            sql.append(" where ");
+            sql.append(selection);
+            sql.append(" = '");
+            sql.append(selectArg);
+            sql.append("'");
+        }
+
 //        printf(" projectionSize: %d , %s \n", projectionSize, sql.c_str());
         if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
             return stmt;
@@ -368,7 +385,7 @@ delete the older data
         switch (type){
             case audio:{
                 const char* projection[2] = {"_id", "mtime"};
-                sqlite3_stmt* stmt = queryData("audio", projection, 2, "_path", path);
+                sqlite3_stmt* stmt = queryData("audio", projection,  "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -393,7 +410,7 @@ delete the older data
                 break;
             case video:{
                 const char* projection[2] = {"_id", "mtime"};
-                sqlite3_stmt* stmt = queryData("video", projection, 2, "_path", path);
+                sqlite3_stmt* stmt = queryData("video", projection, "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -418,7 +435,7 @@ delete the older data
                 break;
             case folder:{
                 const char* projection[1] = {"_id"};
-                sqlite3_stmt* stmt = queryData("folder_dir", projection, 1, "_path", path);
+                sqlite3_stmt* stmt = queryData("folder_dir", projection, "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -785,14 +802,14 @@ delete the older data
         //================sqlite3===============
 
         //=============insert test=========
-        printf("insert test=================   \n");
-        sql = "insert into audio (_name, _path) values ('sqlite3test', 'sqlite3test')";
-        rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-        if (rs != SQLITE_OK) {
-            printf("insert sqlite3 fail %s\n", errMsg);
-            return -1;
-        }
-        printf("insert sqlite3 success\n");
+//        printf("insert test=================   \n");
+//        sql = "insert into audio (_name, _path) values ('sqlite3test', 'sqlite3test')";
+//        rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
+//        if (rs != SQLITE_OK) {
+//            printf("insert sqlite3 fail %s\n", errMsg);
+//            return -1;
+//        }
+//        printf("insert sqlite3 success\n");
         return 0;
     }
 

@@ -4,8 +4,25 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:onClick="videoMenu"
     tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/album_text"
+        android:layout_width="261dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="340dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/artist_text"
+        android:layout_width="261dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="399dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/button"
@@ -35,28 +52,29 @@
         android:layout_height="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.794" />
+        app:layout_constraintVertical_bias="0.919" />
 
     <Button
         android:id="@+id/last"
-        android:layout_width="66dp"
-        android:layout_height="47dp"
+        android:layout_width="75dp"
+        android:layout_height="44dp"
         android:layout_marginBottom="44dp"
         android:text="上一首"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/reset"
-        app:layout_constraintHorizontal_bias="0.541"
+        app:layout_constraintHorizontal_bias="0.575"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.725" />
+        app:layout_constraintVertical_bias="0.865" />
 
     <Button
         android:id="@+id/play_pause"
         android:layout_width="61dp"
         android:layout_height="45dp"
-        android:text="暂停"
+        android:text="播放"
         app:layout_constraintBottom_toTopOf="@+id/reset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -67,8 +85,8 @@
         android:id="@+id/reset"
         android:layout_width="62dp"
         android:layout_height="39dp"
-        android:layout_marginBottom="188dp"
-        android:text="播放"
+        android:layout_marginBottom="96dp"
+        android:text="复位"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -80,9 +98,75 @@
         android:text="下一首"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.762"
+        app:layout_constraintHorizontal_bias="0.723"
         app:layout_constraintStart_toEndOf="@+id/last"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.679" />
+        app:layout_constraintVertical_bias="0.814" />
+
+    <TextView
+        android:id="@+id/genre_text"
+        android:layout_width="261dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="277dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="261dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="206dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView8"
+        android:layout_width="47dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginTop="206dp"
+        android:text="title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="47dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginTop="277dp"
+        android:text="genre"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView10"
+        android:layout_width="47dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginTop="340dp"
+        android:text="album"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView11"
+        android:layout_width="47dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="7dp"
+        android:layout_marginTop="399dp"
+        android:text="artist"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="菜单"
+        tools:layout_editor_absoluteX="29dp"
+        tools:layout_editor_absoluteY="87dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

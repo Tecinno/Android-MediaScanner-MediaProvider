@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <string>
 #include "sqlite3.h"
+#include <unistd.h>
 //#include <mediametadataretriever.h>
 //#include <CharacterEncodingDetector.h>
 //#include <media/stagefright/MediaSource.h>
@@ -48,10 +49,10 @@ namespace android {
     private:
         void prescan();
         int creat_database(sqlite3* &db);
-        sqlite3 * open_database();
+        bool open_database(sqlite3* &mdb);
         bool scanFile(sqlite3 *db,const  char* path, mediaType type, int parentId, const int dirLayer);
         int checkFileNeedUpdate(const char* path, int mtime, mediaType type);
-        sqlite3_stmt* queryData(const char* table, const char* projection[], const char* selection, const char* selectArg);
+        sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg);
         bool updateFolderHaveMedia(sqlite3 *db, int id, mediaType type);
         bool delete_old_data(std::string& list);
 

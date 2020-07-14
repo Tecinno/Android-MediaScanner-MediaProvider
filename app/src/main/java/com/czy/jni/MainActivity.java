@@ -35,7 +35,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean isChanging=false;//互斥变量，防止定时器与SeekBar拖动时进度冲突
     private CurrentAudioData audioData;
     private CurrentVideoData videoData;
-
+    private TextView titleText ;
+    private TextView genreText ;
+    private TextView albumText ;
+    private TextView artistText ;
     private enum PlayType {
         DEFAULT,LAST,NEXT
     }
@@ -50,18 +53,32 @@ public class MainActivity extends AppCompatActivity {
         findViews();
         audioData = new CurrentAudioData();
         videoData = new CurrentVideoData();
-//        showAudio(PlayType.DEFAULT);
     }
     private void showAudio(PlayType type) {
         Log.e(TAG, "showAudio");
         Uri music = Uri.parse( "content://media.scan/audio");
-        music = music.buildUpon().appendQueryParameter("limit", "1").build();
-        String ID = audioData.id.toString();
         Cursor c;
+        music = music.buildUpon().appendQueryParameter("limit", "1").build();
+        if (audioData.id == -1) {
+            c = getContentResolver().query(music, new String[]{"_id"}, null, null,"_id");
+            if (c != null && c.moveToFirst()) {
+                audioData.id = c.getInt(c.getColumnIndex("_id"));
+            }else {
+                Log.e(TAG, "showAudio no data");
+                c.close();
+                return;
+            }
+        }
+        String ID = audioData.id.toString();
         switch (type) {
             case LAST:c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id < ?",new String[]{ID},"_id desc");
+                if (c == null)
+                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, new String[]{ID},"_id desc");
                 break;
-            case NEXT:c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id > ?",new String[]{ID},"_id desc");
+            case NEXT:
+                c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id > ?",new String[]{ID},"_id");
+                if (c == null)
+                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, new String[]{ID},"_id");
                 break;
             case DEFAULT:c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id = ?",new String[]{ID},null);
                 break;
@@ -72,22 +89,28 @@ public class MainActivity extends AppCompatActivity {
         if (c != null && c.moveToFirst()) {
             Log.e(TAG, "showAudio c != null && c.moveToFirst()");
             audioData.path = c.getString(c.getColumnIndex("_path"));
+            audioData.id = c.getInt(c.getColumnIndex("_id"));
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             try {
                 Log.e(TAG, "showAudio try , path : "+audioData.path);
-//                mmr.setDataSource(audioData.path);
-//                Log.e(TAG, "showAudio after setDataSource "+audioData.path);
-//                audioData.title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-//                audioData.artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-//                audioData.album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-//                audioData.genre = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE);
-                Log.e(TAG, " PATH : "+audioData.path+" , artist : "+audioData.artist+" , album : "+audioData.album+" , genre : "+audioData.genre);
+                mmr.setDataSource(audioData.path);
+                Log.e(TAG, "showAudio after setDataSource "+audioData.path);
+                audioData.title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                titleText.setText(audioData.title);
+                audioData.artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                artistText.setText(audioData.artist);
+                audioData.album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                albumText.setText(audioData.album);
+                audioData.genre = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE);
+                genreText.setText(audioData.genre);
+                Log.e(TAG, "ID :" + audioData.id + " ,PATH : "+audioData.path+" , artist : "+audioData.artist+" , album : "+audioData.album+" , genre : "+audioData.genre);
             }catch (Exception e) {
 
             }
         }else {
             Log.e(TAG, "showAudio cursor is null");
         }
+        c.close();
     }
 
     private void findViews() {
@@ -95,12 +118,14 @@ public class MainActivity extends AppCompatActivity {
         reset = (Button) findViewById(R.id.reset);
         last = (Button) findViewById(R.id.last);
         next = (Button) findViewById(R.id.next);
-
+        titleText = this.findViewById(R.id.title_text);
+        genreText = this.findViewById(R.id.genre_text);
+        albumText = this.findViewById(R.id.album_text);
+        artistText = this.findViewById(R.id.artist_text);
         play_pause.setOnClickListener(new MyClick());
         reset.setOnClickListener(new MyClick());
         last.setOnClickListener(new MyClick());
         next.setOnClickListener(new MyClick());
-
         seekbar = (SeekBar) findViewById(R.id.seekBar);
         seekbar.setOnSeekBarChangeListener(new MySeekbar());
     }
@@ -151,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
     //当前音乐信息存储
     class CurrentAudioData {
         public CurrentAudioData() {
-            id = 1;
+            id = -1;
         }
         public Integer id;
         public String path;
@@ -230,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
                             player.start();// 开始
                             ifplay = true;
                         } else if (ifplay) {
-                            play_pause.setText("继续");
+                            play_pause.setText("播放");
                             player.pause();
                             ifplay = false;
                         }
@@ -244,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
                                 player.setDataSource(file.getAbsolutePath());
                                 player.prepare();// 准备
                                 player.start();// 开始
+                                player.seekTo(0);
                             } catch (IllegalArgumentException e) {
                                 e.printStackTrace();
                             } catch (IllegalStateException e) {
@@ -254,16 +280,27 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case R.id.next:
+                        Log.e(TAG, "MyClick next");
                         showAudio(PlayType.NEXT);
                         if (audioData.path == null) {
                             Log.e(TAG, "MyClick next audioData.path is null");
                             return;
+                        }else {
+                            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
                         }
+                        if(ifplay) {
+                            player.pause();
+                        }
+                        ifplay = true;
                         file = new File(audioData.path);
                         try {
+
+                            player.reset();
+//                            player.release();
                             player.setDataSource(file.getAbsolutePath());
                             player.prepare();// 准备
                             player.start();// 开始
+                            player.seekTo(0);
                         } catch (IllegalArgumentException e) {
                             e.printStackTrace();
                         } catch (IllegalStateException e) {
@@ -273,13 +310,22 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case R.id.last:
+                        Log.e(TAG, "MyClick last");
                         showAudio(PlayType.LAST);
                         if (audioData.path == null) {
                             Log.e(TAG, "MyClick last audioData.path is null");
                             return;
+                        } else {
+                            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
                         }
+                        if(ifplay) {
+                            player.pause();
+                        }
+                        ifplay = true;
                         file = new File(audioData.path);
                         try {
+                            player.reset();
+//                            player.release();
                             player.setDataSource(file.getAbsolutePath());
                             player.prepare();// 准备
                             player.start();// 开始

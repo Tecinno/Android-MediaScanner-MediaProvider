@@ -3,6 +3,7 @@
 
 
 #include <sstream>
+#include <jni.h>
 #include "Scan.h"
 #include "android/log.h"
 
@@ -62,6 +63,7 @@ namespace android{
         //================open database===============
 
         q1.push(root);
+        prescan();
         while(!q1.empty()) {
             sDirEntry dir_entry_parent = q1.front();
             //dirLayer control
@@ -259,29 +261,62 @@ namespace android{
         return MEDIA_SCAN_RESULT_OK;
     }
 
-/*
-delete the older data
-*/
-     void Scan::prescan() {
+    /*
+    delete the older data
+    */
+    void Scan::prescan(){
+        printf("prescan \\n");
+        if(mdb == NULL)
+            open_database(mdb);
         const char* projection[2] = {"_id", "_path"};
-        sqlite3_stmt* stmt = queryData("audio", projection, NULL, NULL);
+        char* errMsg;
+        sqlite3_stmt* stmt = queryData("audio", projection, 2, NULL, NULL);
         if (stmt == NULL) {
-            printf("checkFileNeedUpdate stmt == NULL\n");
+            printf("prescan stmt == NULL\\n");
             sqlite3_finalize(stmt);
             return ;
         }
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string sql = "delete from audio where _id in ( ";
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
             int id = sqlite3_column_int(stmt, 0);
-
-            if (id > 0) {
-                int oldMtime = sqlite3_column_int(stmt, 1);
-
+            if (id >= 0) {
+                std::string deleteid;
+                std::stringstream ss;
+                ss<<id;
+                ss>>deleteid;
+                const char* abspath = (char*)sqlite3_column_text(stmt, 1);
+                if( access( abspath, 0) == -1 ) {
+                    sql.append(deleteid);
+                    while (sqlite3_step(stmt) == SQLITE_ROW) {
+                        id = sqlite3_column_int(stmt, 0);
+                        if (id >= 0) {
+                            std::stringstream ss;
+                            ss<<id;
+                            ss>>deleteid;
+                            abspath = (char*)sqlite3_column_text(stmt, 1);
+                            if( access( abspath, 0) == -1 ) {
+                                printf("prescan id : %d path : %s no exist !!! \\n", id, abspath);
+                                sql.append(", ");
+                                sql.append(deleteid);
+                            }
+                        }
+                    }
+                    break;
+                }
             }
+
+        }
+        sql.append(")");
+        int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
+        if (rs != SQLITE_OK) {
+            printf("prescan %s fail %s !!!\n", sql.c_str(), errMsg);
+            sqlite3_finalize(stmt);
+            return ;
+        } else {
+            printf("prescan %s ,success\n", sql.c_str());
         }
         sqlite3_finalize(stmt);
-
     }
-
 /*
     get folder Id in folder_dir
 */
@@ -323,7 +358,7 @@ delete the older data
     }
 
 
-    sqlite3_stmt* Scan::queryData(const char* table, const char* projection[], const char* selection, const char* selectArg) {
+    sqlite3_stmt* Scan::queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg) {
 //        sqlite3 *db = open_database();
         if (mdb == NULL){
             printf("mdb == NULL\n");
@@ -337,7 +372,7 @@ delete the older data
         // sql = "select projection[] from table where selection = selectArg";
         std::string sql = "select ";
         sql.append(projection[0]);
-        int projectionSize = sizeof(projection)/sizeof(projection[0]);
+//        int projectionSize = sizeof(projection)/sizeof(projection[0]);
         for (int i = 1; i < projectionSize; ++i) {
             sql.append(",");
             sql.append(projection[i]);
@@ -385,7 +420,7 @@ delete the older data
         switch (type){
             case audio:{
                 const char* projection[2] = {"_id", "mtime"};
-                sqlite3_stmt* stmt = queryData("audio", projection,  "_path", path);
+                sqlite3_stmt* stmt = queryData("audio", projection, 2, "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -410,7 +445,7 @@ delete the older data
                 break;
             case video:{
                 const char* projection[2] = {"_id", "mtime"};
-                sqlite3_stmt* stmt = queryData("video", projection, "_path", path);
+                sqlite3_stmt* stmt = queryData("video", projection,2, "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -435,7 +470,7 @@ delete the older data
                 break;
             case folder:{
                 const char* projection[1] = {"_id"};
-                sqlite3_stmt* stmt = queryData("folder_dir", projection, "_path", path);
+                sqlite3_stmt* stmt = queryData("folder_dir", projection, 1, "_path", path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
                     sqlite3_finalize(stmt);
@@ -661,17 +696,17 @@ delete the older data
         }
     }
 
-    sqlite3 * Scan::open_database() {
+    bool Scan::open_database(sqlite3* &mdb) {
         if (mdb == NULL) {
 //            int rc = sqlite3_open("/data/data/com.czy.jni/cache/external_udisk1.db", &mdb);SQLITE_OPEN_NOMUTEX， SQLITE_OPEN_SHAREDCACHE///data/data/com.czy.jni/databases/external_udisk.db
-             int rc = sqlite3_open_v2(DBPATH1, &mdb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+            int rc = sqlite3_open_v2(DBPATH1, &mdb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
             if (rc != SQLITE_OK) {
                 printf("open sqlite3 fail\n");
-                return NULL;
+                return false;
             }
         }
 //        printf("open sqlite3 success\n");
-        return mdb;
+        return true;
     }
 
     int Scan::creat_database(sqlite3* &db) {

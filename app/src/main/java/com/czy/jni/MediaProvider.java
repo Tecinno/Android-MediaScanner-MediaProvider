@@ -208,9 +208,6 @@ public class MediaProvider extends ContentProvider {
         qb.setTables(mediaTable);
 
         if (sortOrder == null || sortOrder == ""){
-            /**
-             * 默认按照学生姓名排序
-             */
             sortOrder = NAME + " COLLATE LOCALIZED ASC";
 
         }
@@ -218,9 +215,6 @@ public class MediaProvider extends ContentProvider {
         Cursor c = qb.query(db, projection, selection, selectionArgs,null, null, sortOrder);
         if (c == null)
             return null;
-        /**
-         * 注册内容URI变化的监听器
-         */
         c.setNotificationUri(getContext().getContentResolver(), uri);
         return c;
     }
@@ -264,19 +258,12 @@ public class MediaProvider extends ContentProvider {
         return mediaTable;
     }
     public void mediascanner(){
-//        String[] title = {"上海","伤害","上海","伤害"};
-//        int[] result ={0};
-//        try {
-//            result = stringFromJNI(title);
-//        }catch (Exception e) {
-//            Log.e(TAG,"mediascanner Exception : "+ e);
-//        }
-//
-//        if (result == null) {
-//            Log.e(TAG,"end jni result == null");
-//        } else
-//            Log.e(TAG,"end jni result != null");
+        long startTime = System.nanoTime();
+        String scanPath = "/sdcard/android_ubuntu/不同媒体类型";
+        scan(scanPath);
+        long endTime = System.nanoTime();
+        Log.e(TAG,"scan resume time : " + (endTime-startTime));
     }
 
-//    public native int[] stringFromJNI(String[] title);
+    public native int[] scan(String scanPath);
 }

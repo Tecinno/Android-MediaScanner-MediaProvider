@@ -163,40 +163,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void buttonlisten(View view) {
-//        opendatabase(true);
-//        myProviderQuery();
 //        mediascanner();
         Thread mthread = new Thread(new Runnable() {
             @Override
             public  void run(){
-                mediascanner();
+//              mediascanner();
+                opendatabase();
                 myProviderQuery();
-//                opendatabase(true);
+
             }
         });mthread.start();
 
     }
-    private void opendatabase(boolean isAudio) {
+
+    //打开数据库，开始扫描
+    private void opendatabase() {
         Log.e("MainThread", " myProviderInsert");
         ContentValues values = new ContentValues();
         String URL;
-        if (isAudio == true)
-            URL = "content://media.scan/audio";
-        else
-            URL = "content://media.scan/video";
-
+        URL = "content://media.scan/audio";
         Uri music = Uri.parse(URL);
-
-
         values.put(MediaProvider.NAME, "open database");
-
-//        values.put(MediaProvider.PATH,);
         Uri uri = getContentResolver().insert(
                 music, values);
-
-        Toast.makeText(getBaseContext(),
-                uri.toString(), Toast.LENGTH_LONG).show();
     }
+
     //当前音乐信息存储
     class CurrentAudioData {
         public CurrentAudioData() {
@@ -231,140 +222,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    class MyClick implements View.OnClickListener {
-//        public void onClick(View v) {
-//            if (audioData.path == null) {
-//                showAudio(PlayType.DEFAULT);
-//                if (audioData.path == null) {
-//                    Log.e(TAG, "MyClick audioData.path is null");
-//                    return;
-//                }
-//            }
-//            File file = new File(audioData.path);
-//            // 判断有没有要播放的文件
-//            if (file.exists()) {
-//                Log.e(TAG, "file exist : "+file);
-//                switch (v.getId()) {
-//                    case R.id.play_pause:
-//                        if (player != null && !ifplay) {
-//                            play_pause.setText("暂停");
-//                            if (!iffirst) {
-//                                player.reset();
-//                                try {
-//                                    player.setDataSource(file.getAbsolutePath());
-//                                    player.prepare();// 准备
-//
-//                                } catch (IllegalArgumentException e) {
-//                                    e.printStackTrace();
-//                                } catch (IllegalStateException e) {
-//                                    e.printStackTrace();
-//                                } catch (IOException e) {
-//                                    e.printStackTrace();
-//                                }
-//                                seekbar.setMax(player.getDuration());//设置进度条
-//                                //----------定时器记录播放进度---------//
-//                                mTimer = new Timer();
-//                                mTimerTask = new TimerTask() {
-//                                    @Override
-//                                    public void run() {
-//                                        if(isChanging==true) {
-//                                            return;
-//                                        }
-//                                        seekbar.setProgress(player.getCurrentPosition());
-//                                    }
-//                                };
-//                                mTimer.schedule(mTimerTask, 0, 10);
-//                                iffirst=true;
-//                            }
-//                            player.start();// 开始
-//                            ifplay = true;
-//                        } else if (ifplay) {
-//                            play_pause.setText("播放");
-//                            player.pause();
-//                            ifplay = false;
-//                        }
-//                        break;
-//                    case R.id.reset:
-//                        if (ifplay) {
-//                            player.seekTo(0);
-//                        } else {
-//                            player.reset();
-//                            try {
-//                                player.setDataSource(file.getAbsolutePath());
-//                                player.prepare();// 准备
-//                                player.start();// 开始
-//                                player.seekTo(0);
-//                            } catch (IllegalArgumentException e) {
-//                                e.printStackTrace();
-//                            } catch (IllegalStateException e) {
-//                                e.printStackTrace();
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                        break;
-//                    case R.id.next:
-//                        Log.e(TAG, "MyClick next");
-//                        showAudio(PlayType.NEXT);
-//                        if (audioData.path == null) {
-//                            Log.e(TAG, "MyClick next audioData.path is null");
-//                            return;
-//                        }else {
-//                            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
-//                        }
-//                        if(ifplay) {
-//                            player.pause();
-//                        }
-//                        ifplay = true;
-//                        file = new File(audioData.path);
-//                        try {
-//                            player.reset();
-//                            player.setDataSource(file.getAbsolutePath());
-//                            player.prepare();// 准备
-//                            player.start();// 开始
-//                            player.seekTo(0);
-//                        } catch (IllegalArgumentException e) {
-//                            e.printStackTrace();
-//                        } catch (IllegalStateException e) {
-//                            e.printStackTrace();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        break;
-//                    case R.id.last:
-//                        Log.e(TAG, "MyClick last");
-//                        showAudio(PlayType.LAST);
-//                        if (audioData.path == null) {
-//                            Log.e(TAG, "MyClick last audioData.path is null");
-//                            return;
-//                        } else {
-//                            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
-//                        }
-//                        if(ifplay) {
-//                            player.pause();
-//                        }
-//                        ifplay = true;
-//                        file = new File(audioData.path);
-//                        try {
-//                            player.reset();
-////                            player.release();
-//                            player.setDataSource(file.getAbsolutePath());
-//                            player.prepare();// 准备
-//                            player.start();// 开始
-//                        } catch (IllegalArgumentException e) {
-//                            e.printStackTrace();
-//                        } catch (IllegalStateException e) {
-//                            e.printStackTrace();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        break;
-//                }
-//            } else {
-//                Log.e(TAG, "file no exist : "+file);
-//            }
-//        }
-//    }
     public void play_pause_button(View view) {
         Log.e(TAG, " play_pause_button");
         if (audioData.path == null) {

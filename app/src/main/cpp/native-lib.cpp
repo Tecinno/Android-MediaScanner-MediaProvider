@@ -4,24 +4,16 @@
 #include <stdio.h>
 #include "Scan.h"
 
-extern "C" JNIEXPORT jintArray JNICALL
-Java_com_czy_jni_MainActivity_stringFromJNI(//Java_com_czy_jni_MediaProvider_stringFromJNI    Java_com_czy_jni_MainActivity_stringFromJNI
-        JNIEnv *env, jobject thiz, jobjectArray titleArray) {//Java_com_czy_jni_MediaProvider_stringFromJNI
-    std::string hello = "Hello from C++";
-    int size = 5;
-    jintArray jarrp = env->NewIntArray(size);
-     jint arrp[size] ;
-    for(int i = 0; i < size; i++){
-        arrp[i] = i;
-    }
-     env->SetIntArrayRegion(jarrp, 0, size, arrp);
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_czy_jni_MainActivity_scan(//Java_com_czy_jni_MediaProvider_stringFromJNI    Java_com_czy_jni_MainActivity_stringFromJNI
+        JNIEnv *env, jobject thiz, jstring scanPath) {//Java_com_czy_jni_MediaProvider_stringFromJNI
+    const char *path =NULL;
+    path = env->GetStringUTFChars(scanPath, 0);
     android::Scan *scan = new android::Scan();
-    if (scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型") == 0) {///data/data/com.czy.jni/   mnt/sdcard /udisk ///sdcard/android_ubuntu/不同媒体类型  /sdcard/Music
-        delete(scan);
-        return NULL;
-    } else  {
-        delete(scan);
-        return jarrp;
-    }
+    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", true /*first scan*/);
+    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", false);
+    delete(scan);
+    env->ReleaseStringUTFChars(scanPath, path);
+    return NULL;
 }
 

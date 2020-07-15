@@ -2,7 +2,10 @@ package com.czy.jni;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
@@ -39,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView genreText ;
     private TextView albumText ;
     private TextView artistText ;
+    private String scanPath = "/sdcard/android_ubuntu/不同媒体类型";
     private enum PlayType {
         DEFAULT,LAST,NEXT
     }
@@ -49,10 +53,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e(TAG, "onCreate");
         setContentView(R.layout.activity_main);
         findViews();
         audioData = new CurrentAudioData();
         videoData = new CurrentVideoData();
+        getPermission();
+    }
+
+    public void getPermission(){
+        Log.e(TAG, "getPermission");
+        int permissionread = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+        int permissionwrite = this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permissionread != PackageManager.PERMISSION_GRANTED && permissionwrite != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "getPermission no permission !!!");
+            this.requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
     }
     private void showAudio(PlayType type) {
         Log.e(TAG, "showAudio");
@@ -60,25 +77,32 @@ public class MainActivity extends AppCompatActivity {
         Cursor c;
         music = music.buildUpon().appendQueryParameter("limit", "1").build();
         if (audioData.id == -1) {
-            c = getContentResolver().query(music, new String[]{"_id"}, null, null,"_id");
-            if (c != null && c.moveToFirst()) {
-                audioData.id = c.getInt(c.getColumnIndex("_id"));
-            }else {
-                Log.e(TAG, "showAudio no data");
-                c.close();
+            try {
+                c = getContentResolver().query(music, new String[]{"_id"}, null, null,"_id");
+                if (c != null && c.moveToFirst()) {
+                    audioData.id = c.getInt(c.getColumnIndex("_id"));
+                }else {
+                    Log.e(TAG, "showAudio no data");
+                    c.close();
+                    return;
+                }
+            }catch (Exception e){
+                Log.e(TAG, "showAudio query error : " + e);
                 return;
             }
         }
         String ID = audioData.id.toString();
         switch (type) {
             case LAST:c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id < ?",new String[]{ID},"_id desc");
-                if (c == null)
-                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, new String[]{ID},"_id desc");
+                if (c == null || !c.moveToFirst()) {
+                    Log.e(TAG, "showAudio audi cursor is null");
+                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, null,"_id desc");
+                }
                 break;
             case NEXT:
                 c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id > ?",new String[]{ID},"_id");
-                if (c == null)
-                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, new String[]{ID},"_id");
+                if (c == null || !c.moveToFirst())
+                    c = getContentResolver().query(music, new String[]{"_id, _path"}, null, null,"_id");
                 break;
             case DEFAULT:c = getContentResolver().query(music, new String[]{"_id, _path"}, "_id = ?",new String[]{ID},null);
                 break;
@@ -122,10 +146,10 @@ public class MainActivity extends AppCompatActivity {
         genreText = this.findViewById(R.id.genre_text);
         albumText = this.findViewById(R.id.album_text);
         artistText = this.findViewById(R.id.artist_text);
-        play_pause.setOnClickListener(new MyClick());
-        reset.setOnClickListener(new MyClick());
-        last.setOnClickListener(new MyClick());
-        next.setOnClickListener(new MyClick());
+//        play_pause.setOnClickListener(new MyClick());
+//        reset.setOnClickListener(new MyClick());
+//        last.setOnClickListener(new MyClick());
+//        next.setOnClickListener(new MyClick());
         seekbar = (SeekBar) findViewById(R.id.seekBar);
         seekbar.setOnSeekBarChangeListener(new MySeekbar());
     }
@@ -207,144 +231,292 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    class MyClick implements View.OnClickListener {
-        public void onClick(View v) {
+//    class MyClick implements View.OnClickListener {
+//        public void onClick(View v) {
+//            if (audioData.path == null) {
+//                showAudio(PlayType.DEFAULT);
+//                if (audioData.path == null) {
+//                    Log.e(TAG, "MyClick audioData.path is null");
+//                    return;
+//                }
+//            }
+//            File file = new File(audioData.path);
+//            // 判断有没有要播放的文件
+//            if (file.exists()) {
+//                Log.e(TAG, "file exist : "+file);
+//                switch (v.getId()) {
+//                    case R.id.play_pause:
+//                        if (player != null && !ifplay) {
+//                            play_pause.setText("暂停");
+//                            if (!iffirst) {
+//                                player.reset();
+//                                try {
+//                                    player.setDataSource(file.getAbsolutePath());
+//                                    player.prepare();// 准备
+//
+//                                } catch (IllegalArgumentException e) {
+//                                    e.printStackTrace();
+//                                } catch (IllegalStateException e) {
+//                                    e.printStackTrace();
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                seekbar.setMax(player.getDuration());//设置进度条
+//                                //----------定时器记录播放进度---------//
+//                                mTimer = new Timer();
+//                                mTimerTask = new TimerTask() {
+//                                    @Override
+//                                    public void run() {
+//                                        if(isChanging==true) {
+//                                            return;
+//                                        }
+//                                        seekbar.setProgress(player.getCurrentPosition());
+//                                    }
+//                                };
+//                                mTimer.schedule(mTimerTask, 0, 10);
+//                                iffirst=true;
+//                            }
+//                            player.start();// 开始
+//                            ifplay = true;
+//                        } else if (ifplay) {
+//                            play_pause.setText("播放");
+//                            player.pause();
+//                            ifplay = false;
+//                        }
+//                        break;
+//                    case R.id.reset:
+//                        if (ifplay) {
+//                            player.seekTo(0);
+//                        } else {
+//                            player.reset();
+//                            try {
+//                                player.setDataSource(file.getAbsolutePath());
+//                                player.prepare();// 准备
+//                                player.start();// 开始
+//                                player.seekTo(0);
+//                            } catch (IllegalArgumentException e) {
+//                                e.printStackTrace();
+//                            } catch (IllegalStateException e) {
+//                                e.printStackTrace();
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case R.id.next:
+//                        Log.e(TAG, "MyClick next");
+//                        showAudio(PlayType.NEXT);
+//                        if (audioData.path == null) {
+//                            Log.e(TAG, "MyClick next audioData.path is null");
+//                            return;
+//                        }else {
+//                            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
+//                        }
+//                        if(ifplay) {
+//                            player.pause();
+//                        }
+//                        ifplay = true;
+//                        file = new File(audioData.path);
+//                        try {
+//                            player.reset();
+//                            player.setDataSource(file.getAbsolutePath());
+//                            player.prepare();// 准备
+//                            player.start();// 开始
+//                            player.seekTo(0);
+//                        } catch (IllegalArgumentException e) {
+//                            e.printStackTrace();
+//                        } catch (IllegalStateException e) {
+//                            e.printStackTrace();
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case R.id.last:
+//                        Log.e(TAG, "MyClick last");
+//                        showAudio(PlayType.LAST);
+//                        if (audioData.path == null) {
+//                            Log.e(TAG, "MyClick last audioData.path is null");
+//                            return;
+//                        } else {
+//                            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
+//                        }
+//                        if(ifplay) {
+//                            player.pause();
+//                        }
+//                        ifplay = true;
+//                        file = new File(audioData.path);
+//                        try {
+//                            player.reset();
+////                            player.release();
+//                            player.setDataSource(file.getAbsolutePath());
+//                            player.prepare();// 准备
+//                            player.start();// 开始
+//                        } catch (IllegalArgumentException e) {
+//                            e.printStackTrace();
+//                        } catch (IllegalStateException e) {
+//                            e.printStackTrace();
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                }
+//            } else {
+//                Log.e(TAG, "file no exist : "+file);
+//            }
+//        }
+//    }
+    public void play_pause_button(View view) {
+        Log.e(TAG, " play_pause_button");
+        if (audioData.path == null) {
+            showAudio(PlayType.DEFAULT);
             if (audioData.path == null) {
-                showAudio(PlayType.DEFAULT);
-                if (audioData.path == null) {
-                    Log.e(TAG, "MyClick audioData.path is null");
-                    return;
-                }
+                Log.e(TAG, "play_pause_button audioData.path is null");
+                return;
             }
-            File file = new File(audioData.path);
-            // 判断有没有要播放的文件
-            if (file.exists()) {
-                Log.e(TAG, "file exist : "+file);
-                switch (v.getId()) {
-                    case R.id.play_pause:
-                        if (player != null && !ifplay) {
-                            play_pause.setText("暂停");
-                            if (!iffirst) {
-                                player.reset();
-                                try {
-                                    player.setDataSource(file.getAbsolutePath());
-                                    player.prepare();// 准备
+        }
+        File file = new File(audioData.path);
+        if (file.exists()) {
+            Log.e(TAG, "file exist : " + file);
+            if (player != null && !ifplay) {
+                play_pause.setText("暂停");
+                if (!iffirst) {
+                    player.reset();
+                    try {
+                        player.setDataSource(file.getAbsolutePath());
+                        player.prepare();// 准备
 
-                                } catch (IllegalArgumentException e) {
-                                    e.printStackTrace();
-                                } catch (IllegalStateException e) {
-                                    e.printStackTrace();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                seekbar.setMax(player.getDuration());//设置进度条
-                                //----------定时器记录播放进度---------//
-                                mTimer = new Timer();
-                                mTimerTask = new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        if(isChanging==true) {
-                                            return;
-                                        }
-                                        seekbar.setProgress(player.getCurrentPosition());
-                                    }
-                                };
-                                mTimer.schedule(mTimerTask, 0, 10);
-                                iffirst=true;
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    seekbar.setMax(player.getDuration());//设置进度条
+                    //----------定时器记录播放进度---------//
+                    mTimer = new Timer();
+                    mTimerTask = new TimerTask() {
+                        @Override
+                        public void run() {
+                            if (isChanging == true) {
+                                return;
                             }
-                            player.start();// 开始
-                            ifplay = true;
-                        } else if (ifplay) {
-                            play_pause.setText("播放");
-                            player.pause();
-                            ifplay = false;
+                            seekbar.setProgress(player.getCurrentPosition());
                         }
-                        break;
-                    case R.id.reset:
-                        if (ifplay) {
-                            player.seekTo(0);
-                        } else {
-                            player.reset();
-                            try {
-                                player.setDataSource(file.getAbsolutePath());
-                                player.prepare();// 准备
-                                player.start();// 开始
-                                player.seekTo(0);
-                            } catch (IllegalArgumentException e) {
-                                e.printStackTrace();
-                            } catch (IllegalStateException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case R.id.next:
-                        Log.e(TAG, "MyClick next");
-                        showAudio(PlayType.NEXT);
-                        if (audioData.path == null) {
-                            Log.e(TAG, "MyClick next audioData.path is null");
-                            return;
-                        }else {
-                            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
-                        }
-                        if(ifplay) {
-                            player.pause();
-                        }
-                        ifplay = true;
-                        file = new File(audioData.path);
-                        try {
-
-                            player.reset();
-//                            player.release();
-                            player.setDataSource(file.getAbsolutePath());
-                            player.prepare();// 准备
-                            player.start();// 开始
-                            player.seekTo(0);
-                        } catch (IllegalArgumentException e) {
-                            e.printStackTrace();
-                        } catch (IllegalStateException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case R.id.last:
-                        Log.e(TAG, "MyClick last");
-                        showAudio(PlayType.LAST);
-                        if (audioData.path == null) {
-                            Log.e(TAG, "MyClick last audioData.path is null");
-                            return;
-                        } else {
-                            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
-                        }
-                        if(ifplay) {
-                            player.pause();
-                        }
-                        ifplay = true;
-                        file = new File(audioData.path);
-                        try {
-                            player.reset();
-//                            player.release();
-                            player.setDataSource(file.getAbsolutePath());
-                            player.prepare();// 准备
-                            player.start();// 开始
-                        } catch (IllegalArgumentException e) {
-                            e.printStackTrace();
-                        } catch (IllegalStateException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        break;
+                    };
+                    mTimer.schedule(mTimerTask, 0, 10);
+                    iffirst = true;
                 }
-            } else {
-                Log.e(TAG, "file no exist : "+file);
+                player.start();// 开始
+                ifplay = true;
+            }else if (ifplay) {
+                play_pause.setText("播放");
+                player.pause();
+                ifplay = false;
             }
         }
     }
 
+    public void next_button(View view) {
+        Log.e(TAG, " next_button");
+        showAudio(PlayType.NEXT);
+        if (audioData.path == null) {
+            Log.e(TAG, "MyClick next audioData.path is null");
+            return;
+        }else {
+            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
+        }
+        File file = new File(audioData.path);
+        if (!file.exists()) {
+            Log.e(TAG, "next_button file is not exist");
+            return;
+        }
+        if(ifplay) {
+            player.pause();
+        }
+        ifplay = true;
+        file = new File(audioData.path);
+        try {
+            player.reset();
+            player.setDataSource(file.getAbsolutePath());
+            player.prepare();// 准备
+            player.start();// 开始
+            player.seekTo(0);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void reset_button(View view) {
+        Log.e(TAG, " reset_button");
+        if (audioData.path == null) {
+            showAudio(PlayType.DEFAULT);
+            if (audioData.path == null) {
+                Log.e(TAG, "MyClick audioData.path is null");
+                return;
+            }
+        }
+        File file = new File(audioData.path);
+        if (!file.exists()) {
+            Log.e(TAG, "reset_button file is not exist");
+            return;
+        }
+        if (ifplay) {
+            player.seekTo(0);
+        } else {
+            player.reset();
+            try {
+                player.setDataSource(file.getAbsolutePath());
+                player.prepare();// 准备
+                player.start();// 开始
+                player.seekTo(0);
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public void last_button(View view) {
+        Log.e(TAG, " last_button");
+        showAudio(PlayType.LAST);
+        if (audioData.path == null) {
+            Log.e(TAG, "MyClick last audioData.path is null");
+            return;
+        } else {
+            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
+        }
+        File file = new File(audioData.path);
+        if (!file.exists()) {
+            Log.e(TAG, "last_button file is not exist");
+            return;
+        }
+        if(ifplay) {
+            player.pause();
+        }
+        ifplay = true;
 
+        try {
+            player.reset();
+            player.setDataSource(file.getAbsolutePath());
+            player.prepare();// 准备
+            player.start();// 开始
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void audiomenulist(View view) {
+        Log.e(TAG, " audiomenulist");
+    }
     private void myProviderQuery() {
         Log.e(TAG, " myProviderQuery");
         String URL = "content://media.scan/audio";
@@ -375,13 +547,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
     public void mediascanner(){
-        String[] title = {"上海","伤害","上海","伤害"};
-        int[] result ={0};
-        result = stringFromJNI(title);
-        if (result == null) {
-            Log.e(TAG,"end jni result == null");
-        } else
-            Log.e(TAG,"end jni result != null");
+        long startTime = System.nanoTime();
+        scan(scanPath);
+        long endTime = System.nanoTime();
+        Log.e(TAG,"scan resume time : " + (endTime-startTime));
     }
 
     protected void onPause() {
@@ -406,5 +575,5 @@ public class MainActivity extends AppCompatActivity {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public native int[] stringFromJNI(String[] title);
+    public native int[] scan(String title);
 }

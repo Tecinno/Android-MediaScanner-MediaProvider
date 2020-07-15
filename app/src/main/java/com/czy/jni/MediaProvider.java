@@ -66,7 +66,7 @@ public class MediaProvider extends ContentProvider {
                 "parent_id INTEGER," +
                 "size INTEGER," +
                 "mtime INTEGER," +
-                "_name TEXT NOT NULL," +
+                "_name TEXT," +
                 "_path TEXT NOT NULL," +
                 "album TEXT," +
                 "genre TEXT," +
@@ -87,7 +87,7 @@ public class MediaProvider extends ContentProvider {
                 "parent_id INTEGER," +
                 "size INTEGER," +
                 "mtime INTEGER," +
-                "_name TEXT NOT NULL," +
+                "_name TEXT," +
                 "_path TEXT NOT NULL" +
                 ");";
         //===============creat videolist table==============

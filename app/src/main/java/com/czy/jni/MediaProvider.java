@@ -20,7 +20,8 @@ public class MediaProvider extends ContentProvider {
     static {
         System.loadLibrary("native-lib");
     }
-    //    static final String PROVIDER_NAME = "com.example.provider.college5";
+    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
+//    static final String scanPath = "/sdcard/android_ubuntu";//sdcard/android_ubuntu  /udisk
     static final String ACTION_MEDIA_MOUNTED = "android.intent.action.MEDIA_MOUNTED";
     static final String PROVIDER_NAME = "media.scan";
     static final String AUDIO_STRING_URL = "content://" + PROVIDER_NAME + "/audio";
@@ -34,18 +35,20 @@ public class MediaProvider extends ContentProvider {
 
     static final int AUDIO = 1;
     static final int VIDEO = 2;
-
+    static final int FOLDER = 3;
     static final UriMatcher uriMatcher;
     static{
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(PROVIDER_NAME, "audio", AUDIO);
         uriMatcher.addURI(PROVIDER_NAME, "video", VIDEO);
+        uriMatcher.addURI(PROVIDER_NAME, "folder_dir", FOLDER);
 //        uriMatcher.addURI(PROVIDER_NAME, "music/*", MUSIC_NAME);
     }
 
     private SQLiteDatabase db;
     static final String AUDIO_TABLE_NAME = "audio";
     static final String VIDEO_TABLE_NAME = "video";
+    static final String FOLDER_TABLE_NAME = "folder_dir";
     /**
      * 创建和管理提供者内部数据源的帮助类.
      */
@@ -166,6 +169,7 @@ public class MediaProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
             case VIDEO:mediaTable = VIDEO_TABLE_NAME;break;
+            case FOLDER:mediaTable = FOLDER_TABLE_NAME;break;
             default:throw new IllegalArgumentException("Unknown URI " + uri);
         }
         if (mediaTable == null) {
@@ -202,15 +206,16 @@ public class MediaProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
             case VIDEO:mediaTable = VIDEO_TABLE_NAME;break;
+            case FOLDER:mediaTable = FOLDER_TABLE_NAME;break;
             default:throw new IllegalArgumentException("Unknown URI " + uri);
         }
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         qb.setTables(mediaTable);
 
-        if (sortOrder == null || sortOrder == ""){
-            sortOrder = NAME + " COLLATE LOCALIZED ASC";
-
-        }
+//        if (sortOrder == null || sortOrder == ""){
+//            sortOrder = NAME + " COLLATE LOCALIZED ASC";
+//
+//        }
 
         Cursor c = qb.query(db, projection, selection, selectionArgs,null, null, sortOrder);
         if (c == null)
@@ -226,6 +231,7 @@ public class MediaProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
             case VIDEO:mediaTable = VIDEO_TABLE_NAME;break;
+            case FOLDER:mediaTable = FOLDER_TABLE_NAME;break;
             default:throw new IllegalArgumentException("Unknown URI " + uri);
         }
         count = db.delete(mediaTable, selection, selectionArgs);//参数1：表名   参数2：约束删除列的名字   参数3：具体行的值
@@ -240,6 +246,7 @@ public class MediaProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
             case VIDEO:mediaTable = VIDEO_TABLE_NAME;break;
+            case FOLDER:mediaTable = FOLDER_TABLE_NAME;break;
             default:throw new IllegalArgumentException("Unknown URI " + uri);
         }
         count = db.update(mediaTable, values, selection, selectionArgs);
@@ -253,13 +260,14 @@ public class MediaProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
             case VIDEO:mediaTable = VIDEO_TABLE_NAME;break;
+            case FOLDER:mediaTable = FOLDER_TABLE_NAME;break;
             default:throw new IllegalArgumentException("Unknown URI " + uri);
         }
         return mediaTable;
     }
     public void mediascanner(){
         long startTime = System.nanoTime();
-        String scanPath = "/sdcard/android_ubuntu/不同媒体类型";
+//        String scanPath = "/sdcard/android_ubuntu";
         scan(scanPath);
         long endTime = System.nanoTime();
         Log.e(TAG,"scan resume time : " + (endTime-startTime));

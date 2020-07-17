@@ -140,7 +140,7 @@ namespace android{
                     parent_id = 0;
 
                 //=======================end query parent_id=====================
-
+                printf("DT_DIR fileNameStore %s",fileNameStore);
                 if (type == DT_REG)
                 {
                     bool findMediaFile = false;
@@ -193,6 +193,7 @@ namespace android{
 
 
                 } else if (type == DT_DIR) {
+                    printf("DT_DIR fileNameStore %s",fileNameStore);
                     // all dir count could not more than 9999
                     if (dirCount > 9999) {
                         printf("MediaScanner::doProcessDirectoryEntry  dirCount is %d >= 9999 \n",dirCount);
@@ -216,6 +217,7 @@ namespace android{
                                 printf("mdb == NULL when DT_DIR scanFile");
                                 return -1;
                             }
+                        printf("DT_DIR fileNameStore %s",fileNameStore);
                         scanFile(mdb, fileNameStore, folder, parent_id, dirLayer, firstScan);
                     }
 
@@ -644,7 +646,7 @@ namespace android{
                 sql.append(value);
             }
         }
-        // printf("sql %s \n", sql.c_str());
+         printf("sql %s \n", sql.c_str());
 
         int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
         if (rs != SQLITE_OK) {

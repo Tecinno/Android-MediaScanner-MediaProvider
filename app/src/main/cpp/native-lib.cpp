@@ -10,8 +10,8 @@ Java_com_czy_jni_MainActivity_scan(//Java_com_czy_jni_MediaProvider_stringFromJN
     const char *path =NULL;
     path = env->GetStringUTFChars(scanPath, 0);
     android::Scan *scan = new android::Scan();
-    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", true /*first scan*/);
-    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", false);
+    scan->ProcessDirectory(path, true /*first scan*/);
+    scan->ProcessDirectory(path, false);
     delete(scan);
     env->ReleaseStringUTFChars(scanPath, path);
     return NULL;
@@ -23,8 +23,8 @@ Java_com_czy_jni_MediaProvider_scan(//Java_com_czy_jni_MediaProvider_stringFromJ
     const char *path =NULL;
     path = env->GetStringUTFChars(scanPath, 0);
     android::Scan *scan = new android::Scan();
-    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", true /*first scan*/);
-    scan->ProcessDirectory("/sdcard/android_ubuntu/不同媒体类型", false);
+    scan->ProcessDirectory(path, true /*first scan*/);
+    scan->ProcessDirectory(path, false);
     delete(scan);
     env->ReleaseStringUTFChars(scanPath, path);
     return NULL;

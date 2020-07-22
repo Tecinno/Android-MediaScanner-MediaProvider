@@ -20,8 +20,8 @@ public class MediaProvider extends ContentProvider {
     static {
         System.loadLibrary("native-lib");
     }
-    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
-//    static final String scanPath = "/sdcard/android_ubuntu";//sdcard/android_ubuntu  /udisk
+//    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
+    static final String scanPath = "/sdcard/android_ubuntu";//sdcard/android_ubuntu  /udisk
     static final String ACTION_MEDIA_MOUNTED = "android.intent.action.MEDIA_MOUNTED";
     static final String PROVIDER_NAME = "media.scan";
     static final String AUDIO_STRING_URL = "content://" + PROVIDER_NAME + "/audio";
@@ -78,6 +78,8 @@ public class MediaProvider extends ContentProvider {
                 "album_id INTEGER," +
                 "artist_id INTEGER" +
                 ");";
+
+
         //===============creat audiolist table==============
         static final String CREATE_DB_AUDIO_LIST_TABLE = "CREATE TABLE IF NOT EXISTS audiolist(" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -93,6 +95,8 @@ public class MediaProvider extends ContentProvider {
                 "_name TEXT," +
                 "_path TEXT NOT NULL" +
                 ");";
+
+
         //===============creat videolist table==============
         static final String CREATE_DB_VIDEO_LIST_TABLE = "CREATE TABLE IF NOT EXISTS videolist(" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -103,12 +107,15 @@ public class MediaProvider extends ContentProvider {
         static final String CREATE_DB_FLODER_DIR_TABLE = "CREATE TABLE IF NOT EXISTS folder_dir(" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "parent_id INTEGER," +
-                "_name TEXT NOT NULL," +
+                "_name TEXT," +
                 "_path TEXT NOT NULL," +
-                "dir_layer TEXT NOT NULL," +
+                "dir_layer TEXT," +
                 "has_audio INTEGER," +
                 "has_video INTEGER" +
                 ");";
+
+
+
         //===============creat album table==============
         static final String CREATE_DB_ALBUM_TABLE = "CREATE TABLE IF NOT EXISTS album(" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -155,6 +162,7 @@ public class MediaProvider extends ContentProvider {
          */
 
         db = dbHelper.getWritableDatabase();//创建数据库
+//        db.enableWriteAheadLogging();
 //        db.setLocale(Locale.CHINESE);
 //        db.enableWriteAheadLogging();
         return (db == null)? false:true;
@@ -270,7 +278,7 @@ public class MediaProvider extends ContentProvider {
 //        String scanPath = "/sdcard/android_ubuntu";
         scan(scanPath);
         long endTime = System.nanoTime();
-        Log.e(TAG,"scan resume time : " + (endTime-startTime));
+        Log.e(TAG,"all scan resume time : " + (endTime-startTime)/1000000.0 + " ms");
     }
 
     public native int[] scan(String scanPath);

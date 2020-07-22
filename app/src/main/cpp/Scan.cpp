@@ -8,21 +8,27 @@
 #include "android/log.h"
 
 namespace android{
+
 #define ANDORID_LOG_ERROR 6
-#define printf(...) __android_log_print(ANDORID_LOG_ERROR, "Scanner", __VA_ARGS__)
+#define TAG     "Scanner"
+#define printf(...) __android_log_print(ANDORID_LOG_ERROR, TAG, __VA_ARGS__)
+//#define printf(fmt) __android_log_print(ANDORID_LOG_ERROR, TAG, "[TC:%ld][TT:%ld]" fmt, __get_tick_count(), __get_thread_time(), __VA_ARGS__)
 #define MEDIA_SCAN_RESULT_OK 1
 #define MEDIA_SCAN_RESULT_SKIPPED 2
 #define MEDIA_SCAN_RESULT_ERROR 0
 #define DBPATH  "/thirdparty/0/udiskMediaData/com.czy.jni/database/external_udisk.db"
 #define DBPATH1 "/data/data/com.czy.jni/databases/external_udisk.db"
-    static const char *videoType[] = {".mp4", ".3Gp", ".m4v", ".avi"};
-    static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
-    static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
-    static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
+#define ONCE_INSERT_COUNT 200
+
+static const char *videoType[] = {".mp4", ".3Gp", ".m4v", ".avi"};
+static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
+static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
+static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 
     Scan::Scan(){
     };
-    Scan::~Scan(){};
+    Scan::~Scan(){
+    };
     int Scan::callback(void *data, int args_num, char **columnValue, char **columnName) {
         printf("callback-------------\n");
         for(int i = 0; i < args_num; i++){
@@ -38,9 +44,12 @@ namespace android{
 
         printf("ProcessDirectory");
 //        return 0;
+        clock_t  start = clock();
         struct stat statbuf;
         std::queue<sDirEntry> q1;
         sDirEntry root(0, path);
+//        memcpy(pathRoot, path, strlen(path));
+        rootPathLen = strlen(path);
         char fileNameStore[4096];
         int dirCount = 0;
         int audioCount = 0;
@@ -48,17 +57,14 @@ namespace android{
         int dirLayer = 0;
         bool noMedia = false;
         int parent_id = 0;
+        insertcount = 0;
+        char *errMsg;
         //================open database===============
         if (creat_database(mdb) == -1) {
             printf("creat_database failed\n");
             return -1;
         }
-//        if (mdb != NULL) {
-//            sqlite3_close(mdb);
-//            printf("sqlite3_close");
-//        } else {
-//            printf("mdb is NULL when close db");
-//        }
+
 
         //================open database===============
 
@@ -73,7 +79,6 @@ namespace android{
                 sqlite3_close(mdb);
                 return MEDIA_SCAN_RESULT_SKIPPED;
             }
-            printf("begin opendir !!!\n");
             DIR *dir_p = opendir(dir_entry_parent.abs_file_name_p);
             if (!dir_p) {
                 printf("Error opening directory '%s', skipping: %s.\n", dir_entry_parent.abs_file_name_p, strerror(errno));
@@ -90,7 +95,7 @@ namespace android{
                 if (dir_entity_p->d_name[0] == '.' &&
                     (dir_entity_p->d_name[1] == 0 || (dir_entity_p->d_name[1] == '.' && dir_entity_p->d_name[2] == 0)
                      || strncmp(dir_entity_p->d_name,".nomedia",8))) {
-                    printf("doProcessDirectory SKIPPED: %s \n",dir_entity_p->d_name);
+//                    printf("doProcessDirectory SKIPPED: %s \n",dir_entity_p->d_name);
                     continue;
                 }
 
@@ -140,7 +145,7 @@ namespace android{
                     parent_id = 0;
 
                 //=======================end query parent_id=====================
-                printf("DT_DIR fileNameStore %s",fileNameStore);
+//                printf("DT_DIR fileNameStore %s",fileNameStore);
                 if (type == DT_REG)
                 {
                     bool findMediaFile = false;
@@ -193,7 +198,7 @@ namespace android{
 
 
                 } else if (type == DT_DIR) {
-                    printf("DT_DIR fileNameStore %s",fileNameStore);
+//                    printf("DT_DIR fileNameStore %s",fileNameStore);
                     // all dir count could not more than 9999
                     if (dirCount > 9999) {
                         printf("MediaScanner::doProcessDirectoryEntry  dirCount is %d >= 9999 \n",dirCount);
@@ -211,14 +216,14 @@ namespace android{
                     // if (stat(fileNameStore, &statbuf) == 0)
                     // {
                     if (!firstScan) {
-                        if (mdb == NULL)
-                            open_database(mdb);
-                            if (mdb == NULL) {
-                                printf("mdb == NULL when DT_DIR scanFile");
-                                return -1;
-                            }
-                        printf("DT_DIR fileNameStore %s",fileNameStore);
-                        scanFile(mdb, fileNameStore, folder, parent_id, dirLayer, firstScan);
+//                        if (mdb == NULL)
+//                            open_database(mdb);
+//                            if (mdb == NULL) {
+//                                printf("mdb == NULL when DT_DIR scanFile");
+//                                return -1;
+//                            }
+//                        printf("DT_DIR fileNameStore %s",fileNameStore);
+//                        scanFile(mdb, fileNameStore, folder, parent_id, dirLayer, firstScan);
                     }
 
                     //push folder dir to queue
@@ -235,30 +240,24 @@ namespace android{
             closedir(dir_p);
         }
         // sqlite3_close(db);
+        if (mdb != NULL) {
+            flush(mdb, firstScan);
+            sqlite3_close(mdb);
+        }else
+            printf("mdb is NULL when close db");
+        clock_t  end = clock();
+        double resumetime = (double)(end - start)/1000.0;
+
+        if (firstScan)
+            printf("first scan resume time : %lf ms", resumetime);
+        else
+            printf("second scan resume time : %lf ms", resumetime);
+
         printf("MediaScanner::doProcessDirectory finish, audioCount = %d, videoCount = %d, dirLayer = %d, dirCount = %d \n",
                audioCount, videoCount, dirLayer, dirCount);
         printf("\n");
         printf("\n");
 
-
-        //=====================query=====================
-        // printf("select \n");
-        // sql = "select * from audio";
-        // rs = sqlite3_exec(db, sql.c_str(), callback, callbackData, &errMsg);
-        // if (rs != SQLITE_OK) {
-        //     printf("select sqlite3 fail %s\n", errMsg);
-
-        // } else {
-        //     printf("%s\n", sql.c_str());
-        //     printf("select sqlite3 success callbackData:%s\n", callbackData);
-        // }
-        //=====================query=====================
-
-
-        if (mdb != NULL)
-           sqlite3_close(mdb);
-        else
-            printf("mdb is NULL when close db");
         return MEDIA_SCAN_RESULT_OK;
     }
 
@@ -317,7 +316,6 @@ namespace android{
                         break;
                     }
                 }
-
             }
             sql.append(")");
             int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
@@ -335,34 +333,51 @@ namespace android{
     }
 /*
     get folder Id in folder_dir
+    *可以保存上次的路径，不用再查询
 */
     int Scan::getId(const char* path) {
         if (mdb == NULL){
-            printf("mdb == NULL\n");
-            int rc = sqlite3_open_v2(DBPATH1, &mdb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-            if (rc != SQLITE_OK) {
-                return -1;
-            }
+            open_database(mdb);
         }
         sqlite3_stmt* stmt = NULL;
         const char* zTail;
-        const char *dirSuffix = strrchr(path, '/') + 1;
-        std::string sql = "select _id from folder_dir where _name = '";
+        const char *dirSuffix = strrchr(path, '/') + 1;//获取文件夹的名称
+
+//        if (!strncmp(path, pathRoot, strlen(path))){ // 判断是不是根文件夹
+        if (strlen(path) == rootPathLen){ // 判断是不是根文件夹
+//            printf("getId is root : %s \n",path );
+            return 0;
+        }
+//        else
+//            printf("getId is not root : %s  \n",path);
+        std::string sql = "select _id from folder_dir where _name = '";//查询文件夹的id
         sql.append(dirSuffix);
         sql.append("'");
         if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 int parent_id = sqlite3_column_int(stmt, 0);
-                // std::stringstream ss;
-                // ss<<id;
-                // ss>>parent_id;
-                // sprintf(parent_id, "%d", id);
-//                printf("query parent_id success dirSuffix : %s ,parent_id: %d \n", dirSuffix, parent_id);
                 sqlite3_finalize(stmt);
                 return parent_id;
             } else {
-//                printf("getId not id \n");
+                printf("getId %s no find \n",dirSuffix);
+                int len = strlen(path) - strlen(dirSuffix) - 1;
+                char parentPath[len + 1];
+                memset(parentPath, 0, sizeof(parentPath));
+                memcpy(parentPath, path, len);//获取父文件夹路径
+//                parentPath[len]='\0';
+//                printf("getId  len %d,  parentPath %s \n",len, parentPath);
+                int parentid = getId(parentPath);
+                if (parentid != -1)
+                    insertFolder(mdb, path, parentid); //如果没有找到对应folder，就插入
                 sqlite3_finalize(stmt);
+                sql = "select _id from folder_dir order by _id desc LIMIT 1";//获取刚刚插入的id
+                if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
+                    if (sqlite3_step(stmt) == SQLITE_ROW) {
+                        int id = sqlite3_column_int(stmt, 0);
+                        sqlite3_finalize(stmt);
+                        return id;
+                    }
+                }
                 return 0;
             }
         } else {
@@ -411,26 +426,6 @@ namespace android{
             return NULL;
         }
     }
-
-// bool Scan::checkFileChange(String path, long lastFileChange) {
-//     sqlite3 *db = open_database();
-//     if (db == NULL) {
-//         printf("open_database  fail !!!\n");
-//         return NULL;
-//     }
-// }
-
-// void Scan::testQuery() {
-//     std::string projection[1] = {"*"};
-//     sqlite3_stmt* stmt = queryData("audio", projection, "_id", "2");
-//     if (sqlite3_step(stmt) == SQLITE_ROW) {
-//         const unsigned char* data = sqlite3_column_text(stmt, 4);
-//         printf("testQuery data: %s \n", data);
-//     } else {
-//         printf("testQuery not id \n");
-//         return;
-//     }
-// }
 
     int Scan::checkFileNeedUpdate(const char* path, int mtime, mediaType type) {
         switch (type){
@@ -512,6 +507,78 @@ namespace android{
         return MEDIA_NEED_INSERT;
     }
 
+    bool Scan::flush(sqlite3 *db, bool firstScan) {
+        printf("flush  %d !!!\n", mediaList.size());
+        char* errMsg;
+        if (firstScan){
+            if (sqlite3_exec(db,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+                printf("begin fail %s !!!\n", errMsg);
+                return false;
+            } else
+                printf("begin   !!!\n");
+        }
+
+        std::list<std::string>::iterator ctr;
+        for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
+            std::string sql = *ctr;
+            int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
+            if (rs != SQLITE_OK) {
+                printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+//            sqlite3_exec(db,"rollback transaction;",0,0, &errMsg);
+//            printf("rollback transaction;  %s !!!\n",  errMsg);
+//                return false;
+            } else
+                printf("%s", sql.c_str());
+        }
+        mediaList.clear();
+        if (firstScan) {
+            if (sqlite3_exec(db,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
+                printf("commit fail %s !!!\n", errMsg);
+                return false;
+            } else
+                printf("commit   !!!\n");
+        }
+
+        return true;
+    }
+    /*
+    * The method insert folder data to database
+    *
+    * @param db : database
+    * @param path : data path
+    * @param parentId : previous directory's id
+    */
+    bool Scan::insertFolder(sqlite3 *db, const char* path, int parentId) {
+        const char* name = strrchr(path, '/') + 1;
+        printf("insertFolder path %s  !!!\n",path);
+        std::string sql;
+        std::string value;
+        std::string parent_id;
+        char* errMsg;
+        {
+            std::stringstream ss;
+            ss<<parentId;
+            ss>>parent_id;
+        }
+        value = "values ('";
+        value.append(path);
+        value.append("','");
+        value.append(name);
+        value.append("',");
+        value.append(parent_id);
+        value.append(")");
+        sql = "insert into folder_dir(_path, _name, parent_id) ";
+        sql.append(value);
+        int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
+        if (rs != SQLITE_OK) {
+            printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+            return false;
+        } else {
+            printf("%s ,success\n", sql.c_str());
+            return true;
+        }
+    }
+
     /*
      * The method insert or update audio/video/folder data to database
      *
@@ -557,12 +624,16 @@ namespace android{
         if (checkFileResult == MEDIA_NO_UPDATE) {
             return true;
         }
+
+
         if (type == audio) {
             if (checkFileResult == MEDIA_NEED_INSERT) {
                 if(firstScan) {
-                    sql = "insert into audio(_path) ";
+                    sql = "insert into audio(_path, _name) ";
                     value = "values ('";
                     value.append(path);
+                    value.append("','");
+                    value.append(name);
                     value.append("')");
                     sql.append(value);
                 }else {
@@ -597,23 +668,33 @@ namespace android{
                 value.append(path);
                 value.append("'");
                 sql.append(value);
+            } else {
+                return true;
             }
         } else if (type == video) {
             if (checkFileResult == MEDIA_NEED_INSERT) {
-                updateFolderHaveMedia(db, parentId, video);
-                sql = "insert into video(_path, _name, parent_id, size, mtime) ";
-                value = "values ('";
-                value.append(path);
-                value.append("','");
-                value.append(name);
-                value.append("',");
-                value.append(parent_id);
-                value.append(",");
-                value.append(size);
-                value.append(",");
-                value.append(mtime);
-                value.append(")");
-                sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
+                if(firstScan) {
+                    sql = "insert into video(_path) ";
+                    value = "values ('";
+                    value.append(path);
+                    value.append("')");
+                    sql.append(value);
+                }else {
+                    updateFolderHaveMedia(db, parentId, video);
+                    sql = "insert into video(_path, _name, parent_id, size, mtime) ";
+                    value = "values ('";
+                    value.append(path);
+                    value.append("','");
+                    value.append(name);
+                    value.append("',");
+                    value.append(parent_id);
+                    value.append(",");
+                    value.append(size);
+                    value.append(",");
+                    value.append(mtime);
+                    value.append(")");
+                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
+                }
             } else if (checkFileResult == MEDIA_NEED_UPDATE && !firstScan) {
                 sql = "update video set ";
                 value = "_path = '";
@@ -630,6 +711,8 @@ namespace android{
                 value.append(path);
                 value.append("'");
                 sql.append(value);
+            } else {
+                return true;
             }
         } else if (type == folder) {
             if (checkFileResult == MEDIA_NEED_INSERT) {
@@ -644,18 +727,46 @@ namespace android{
                 value.append(")");
                 sql = "insert into folder_dir(_path, _name, dir_layer, parent_id) ";
                 sql.append(value);
+            } else {
+                return true;
             }
         }
-         printf("sql %s \n", sql.c_str());
 
-        int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-        if (rs != SQLITE_OK) {
-            printf("%s fail %s !!!\n", sql.c_str(), errMsg);
-            return false;
-        } else {
-            printf("%s ,success\n", sql.c_str());
-            return true;
+        mediaList.push_back(sql);
+//        printf("push_back : %s ,size %d\n", sql.c_str(), mediaList.size());
+        if (mediaList.size() > 200) {
+
+            return  flush(mdb, firstScan);
         }
+        return true;
+
+//        if(insertcount == 0) {
+//            if (sqlite3_exec(db,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+//                printf("begin fail %s !!!\n", errMsg);
+//                return false;
+//            }
+//            printf("begin transaction!!!\n");
+//        }
+//        ++insertcount;
+//        int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
+//        if (rs != SQLITE_OK) {
+//            printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+////            sqlite3_exec(db,"rollback transaction;",0,0, &errMsg);
+////            printf("rollback transaction;  %s !!!\n",  errMsg);
+//            return false;
+//        } else {
+//            if(insertcount > ONCE_INSERT_COUNT) {
+//                insertcount = 0;
+//                if (sqlite3_exec(db,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
+//                    printf("commit fail %s !!!\n", errMsg);
+//                    return false;
+//                }
+//                printf("insert : %d \n", ONCE_INSERT_COUNT);
+//            }
+//            printf("%s ,success\n", sql.c_str());
+//
+//            return true;
+//        }
     }
 
     /*
@@ -709,8 +820,8 @@ namespace android{
                 printf("open sqlite3 fail\n");
                 return false;
             }
+//            sqlite3_exec(mdb,"PRAGMA synchronous = OFF; ",0,0,0);
         }
-//        printf("open sqlite3 success\n");
         return true;
     }
 
@@ -722,6 +833,7 @@ namespace android{
             printf("open db error  !!!\n");
             return -1;
         }
+        sqlite3_exec(db,"PRAGMA synchronous = OFF; ",0,0,0);
 
 //        sqlite3 *db = open_database();
         char *errMsg;
@@ -794,7 +906,7 @@ namespace android{
         "parent_id INTEGER,"\
         "_name TEXT ,"\
         "_path TEXT NOT NULL,"\
-        "dir_layer TEXT NOT NULL,"\
+        "dir_layer TEXT,"\
         "has_audio INTEGER,"\
         "has_video INTEGER"\
         ");";

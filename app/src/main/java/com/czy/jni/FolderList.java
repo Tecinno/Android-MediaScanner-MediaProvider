@@ -29,14 +29,22 @@ public class FolderList extends AppCompatActivity {
     private FileAdapter mAdapter;
     private int index;
     private String TAG = "Scanner";
+    final static private int Folder = 0;
+    final static private int AudioList = 1;
+    final static private int VideoList = 2;
     private ContentResolver contentResolver;//getContentResolver
+//    private enum MenuType {
+//        FOLDER,ALLAUDIO,NEXT
+//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.folder);
         Context context = this;
         contentResolver = context.getContentResolver();
-        setView();
+        Intent intent = getIntent();
+        int menuType = intent.getIntExtra("menuType", Folder);
+        setView(menuType);
     }
     public void folderInit() {
         Thread mthread = new Thread(new Runnable() {
@@ -48,7 +56,7 @@ public class FolderList extends AppCompatActivity {
 
     }
 
-    public List<ListData> querydata(int  parentId) {
+    public List<ListData> querydata(int  parentId, int menuType) {
         Log.e(TAG, " querydata sun");
         String URL = "content://media.scan/folder_dir";
         Uri folderuri = Uri.parse(URL);
@@ -56,47 +64,58 @@ public class FolderList extends AppCompatActivity {
         Uri audio = Uri.parse(AURL);
         List<ListData> list = new ArrayList();
         String parent_id = String.valueOf(parentId);
-        Cursor c = getContentResolver().query(folderuri, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
-        Log.e("query", "============folder================ ");
-        if (c == null)
-            Log.e(TAG, "c == null ");
-        if (c.moveToFirst()) {
-            do{
-                Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
-                ListData fol = new ListData(true);
-                fol.setId(c.getInt(c.getColumnIndex( "_id")));
-                fol.setName(c.getString(c.getColumnIndex( MediaProvider.NAME)));
-                fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
-                list.add(fol);
-            } while (c.moveToNext());
+        if (menuType == Folder) {
+            Cursor c = getContentResolver().query(folderuri, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
+            Log.e("query", "============folder================ ");
+            if (c == null)
+                Log.e(TAG, "c == null ");
+            if (c.moveToFirst()) {
+                do{
+                    Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
+                    ListData fol = new ListData(ListData.FOLDER);
+                    fol.setId(c.getInt(c.getColumnIndex( "_id")));
+                    fol.setName(c.getString(c.getColumnIndex( MediaProvider.NAME)));
+                    fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
+                    fol.fileTypte = ListData.FOLDER;
+                    list.add(fol);
+                    Log.e("query", " folder list count "+list.size());
+                } while (c.moveToNext());
+                c.close();
+            }
         }
         Log.e("query", "============audio================ ");
-        Cursor a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
+        Cursor a;
+        if (menuType == AudioList) {
+            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null, null,null);
+        } else
+            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
         if (a == null)
             Log.e(TAG, "a == null ");
         if (a.moveToFirst()) {
             do{
                 Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
-                ListData fol = new ListData(false);
+                ListData fol = new ListData(ListData.FOLDER);
                 fol.setId(a.getInt(a.getColumnIndex( "_id")));
                 fol.setName(a.getString(a.getColumnIndex( MediaProvider.NAME)));
                 fol.setPath(a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                fol.fileTypte = ListData.AUDIO;
                 list.add(fol);
+                Log.e("query", "  list count "+list.size());
             } while (a.moveToNext());
+            a.close();
         }
 
         return list;
     }
 
-    private void  setView()
+    private void  setView(int menuType)
     {
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         recycleview = (RecyclerView)findViewById(R.id.recycleview);
-//        recycleview.setLayoutManager(new StaggeredGridLayoutManager(20 , StaggeredGridLayoutManager.HORIZONTAL));//LinearLayoutManager
         recycleview.setLayoutManager(manager);
 
-        List<ListData> list = querydata(0);
+        List<ListData> list = querydata(0, menuType);
         mAdapter = new FileAdapter(getApplicationContext(),list);
         recycleview.setAdapter(mAdapter);
         recycleview.setNestedScrollingEnabled(true);
@@ -113,7 +132,6 @@ public class FolderList extends AppCompatActivity {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
             }
-
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -167,7 +185,7 @@ public class FolderList extends AppCompatActivity {
             holder.text.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(!data.isfolder) {
+                    if(data.fileTypte == ListData.AUDIO) {
                         Intent intent = new Intent();
                         intent.setClass(mContext, MainActivity.class);
                         intent.putExtra("path",data.getPath());
@@ -175,10 +193,9 @@ public class FolderList extends AppCompatActivity {
 //                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS | Intent.FLAG_RECEIVER_FOREGROUND);
 
                        startActivity(intent);
-                    } else {
+                    } else if (data.fileTypte == ListData.FOLDER){
                         openfolder(data.getId());
                     }
-
                 }
             });
         }
@@ -194,7 +211,7 @@ public class FolderList extends AppCompatActivity {
             if (folderidlist.isEmpty()){
                 Log.e(TAG, " backFolder folderidlist back to root ");
                 Intent intent = new Intent();
-                intent.setClass(mContext, MainActivity.class);
+                    intent.setClass(mContext, Menu.class);
 //                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS | Intent.FLAG_RECEIVER_FOREGROUND);
                 startActivity(intent);
             } else {
@@ -217,26 +234,7 @@ public class FolderList extends AppCompatActivity {
             }
 
         }
-//        private void  setView(int id)
-//        {
-//            Log.e(TAG, " querydata sun");
-//            LinearLayoutManager manager = new LinearLayoutManager(mContext);
-//            manager.setOrientation(LinearLayoutManager.VERTICAL);
-//            recycleview = (RecyclerView)findViewById(R.id.recycleview);
-//            recycleview.setLayoutManager(manager);
-//
-//            List<ListData> list = querydata(id);
-//            FileAdapter mAdapter = new FileAdapter(mContext,list);
-//            recycleview.setAdapter(mAdapter);
-//            recycleview.setNestedScrollingEnabled(true);
-//            // 给RecycleView加入滑动监听
-//            recycleview.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//                @Override
-//                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                    super.onScrolled(recyclerView, dx, dy);
-//                }
-//            });
-//        }
+
         @Override
         public int getItemCount() {
             return mItems.size();
@@ -266,12 +264,13 @@ public class FolderList extends AppCompatActivity {
             if (c.moveToFirst()) {
                 do{
                     Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
-                    ListData fol = new ListData(true);
+                    ListData fol = new ListData(ListData.FOLDER);
                     fol.setId(c.getInt(c.getColumnIndex( "_id")));
                     fol.setName(c.getString(c.getColumnIndex( MediaProvider.NAME)));
                     fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
                     list.add(fol);
                 } while (c.moveToNext());
+                c.close();
             }
             Log.e("query", "============audio================ ");
             Cursor a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
@@ -280,12 +279,13 @@ public class FolderList extends AppCompatActivity {
             if (a.moveToFirst()) {
                 do{
                     Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
-                    ListData fol = new ListData(false);
+                    ListData fol = new ListData(ListData.AUDIO);
                     fol.setId(a.getInt(a.getColumnIndex( "_id")));
                     fol.setName(a.getString(a.getColumnIndex( MediaProvider.NAME)));
                     fol.setPath(a.getString(a.getColumnIndex( MediaProvider.PATH)));
                     list.add(fol);
                 } while (a.moveToNext());
+                a.close();
             }
 
             return list;

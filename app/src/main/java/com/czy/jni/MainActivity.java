@@ -166,16 +166,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void folderlist(View view) {
-        Intent intent = new Intent(this, FolderList.class);
+    public void menu_button(View view) {
+        Intent intent = new Intent(this, Menu.class);
+
         startActivity(intent);
     }
+
     public void scan_button(View view) {
         Thread mthread = new Thread(new Runnable() {
             @Override
             public  void run(){
                 opendatabase();
-                myProviderQuery();
+//                myProviderQuery();
 
             }
         });mthread.start();

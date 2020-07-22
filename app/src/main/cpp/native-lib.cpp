@@ -11,7 +11,7 @@ Java_com_czy_jni_MainActivity_scan(//Java_com_czy_jni_MediaProvider_stringFromJN
     path = env->GetStringUTFChars(scanPath, 0);
     android::Scan *scan = new android::Scan();
     scan->ProcessDirectory(path, true /*first scan*/);
-    scan->ProcessDirectory(path, false);
+//    scan->ProcessDirectory(path, false);
     delete(scan);
     env->ReleaseStringUTFChars(scanPath, path);
     return NULL;

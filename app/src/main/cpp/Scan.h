@@ -18,6 +18,7 @@
 #include <string>
 #include "sqlite3.h"
 #include <unistd.h>
+#include <list>
 //#include <mediametadataretriever.h>
 //#include <CharacterEncodingDetector.h>
 //#include <media/stagefright/MediaSource.h>
@@ -39,6 +40,10 @@ namespace android {
             folder
         };
         sqlite3 *mdb;
+        int insertcount;
+//        char pathRoot[1024];
+        int rootPathLen;
+        std::list<std::string> mediaList;
     public:
         Scan();
         ~Scan();
@@ -47,6 +52,8 @@ namespace android {
         static int callback(void *data, int args_num, char **columnValue, char **columnName);
 
     private:
+        bool insertFolder(sqlite3 *db, const char* path, int parentId);
+        bool flush(sqlite3 *db, bool firstScan);
         void prescan();
         int creat_database(sqlite3* &db);
         bool open_database(sqlite3* &mdb);
@@ -55,6 +62,8 @@ namespace android {
         sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg);
         bool updateFolderHaveMedia(sqlite3 *db, int id, mediaType type);
         bool delete_old_data(std::string& list);
+
+
 
         class sDirEntry {
         public:
@@ -76,6 +85,8 @@ namespace android {
                 abs_file_name_p[len] = '\0';
                 filelen = len;
             }
+
+
 
             ~sDirEntry()
             {

@@ -1,13 +1,16 @@
 package com.czy.jni;
 
 public class ListData {
-
+    final static public int AUDIO = 1;
+    final static public int FOLDER = 0;
+    final static public int VIDEO = 2;
     private int id;
     private String name;
     private String path;
     public boolean isfolder;
-    public ListData( boolean isfolder) {
-        this.isfolder = isfolder;
+    public int fileTypte;
+    public ListData( int fileTypte) {
+        this.fileTypte = fileTypte;
     }
     public int getId(){
         return id;

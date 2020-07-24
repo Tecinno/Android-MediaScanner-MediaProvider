@@ -4,7 +4,7 @@
 现在第一遍扫描已经完成80%，有些细节需要改正，但是UI方面视频播放还没做，最主要还是数据库做成。
 
 ![简易音乐播放.png](https://i.loli.net/2020/07/14/C9aK1USMryjPh6Q.png)
-
+![简易音乐播放.png](https://raw.githubusercontent.com/Tecinno/MediaScanner/tamago/%E7%AE%80%E6%98%93%E9%9F%B3%E4%B9%90%E6%92%AD%E6%94%BE.png)
 针对Android的MediaProvider 和 MediaScanner对车机USB播放的几点问题：
 1、扫描的时候是按照深度扫描，并且顺序扫描，如果视频太多，音乐就一直扫描不到，而且一般歌曲视频不会放到那么深的目录；
 2、如果USB删除了一部分媒体文件，Android虽然在预扫描的时候会删除不存在的数据，但是预扫描的时候是可以播放歌曲视频的，这个时候就会有脏数据；如果先预扫描再播放就很慢。

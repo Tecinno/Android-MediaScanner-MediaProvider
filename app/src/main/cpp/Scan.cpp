@@ -384,6 +384,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                 int parent_id = sqlite3_column_int(stmt, 0);
                 sqlite3_finalize(stmt);
                 pathBufId = parent_id;
+                printf("getId %s \n",path);
                 return parent_id;
             } else {
 //                printf("getId %s no find \n",dirSuffix);

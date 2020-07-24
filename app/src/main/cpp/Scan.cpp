@@ -59,7 +59,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         char *errMsg;
         //================判断是否是新U盘===============
         isNewVolume = isNewVol == 1 ? true : false;
-        if (isNewVol)
+        if (isNewVolume)
             printf("ProcessDirectory isNewVolume true \n");
         else
             printf("ProcessDirectory isNewVolume false \n");

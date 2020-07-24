@@ -163,7 +163,7 @@ public class FolderList extends AppCompatActivity {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (isScrollToEnd(recycleview)) {
                     Log.e("tag", "============scroll to end");
-                    mAdapter.refreshList();
+//                    mAdapter.refreshList();
                     index += 1;
                 }
             }
@@ -323,12 +323,18 @@ public class FolderList extends AppCompatActivity {
             if (menuType == AudioList) //判断类型，防止数据中parent_id为null
             {
                 a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+//                a = null;
                 type = ListData.AUDIO;
-            } else
+            } else if (menuType == VideoList) {
+                a = null;
+                type = ListData.AUDIO;
+            }
+            else
             {
                 a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
                 type = ListData.AUDIO;
             }
+
             if (a == null)
             {
                 Log.e(TAG, "a == null ");
@@ -355,6 +361,11 @@ public class FolderList extends AppCompatActivity {
             {
                 v = mContext.getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
                 type = ListData.VIDEO;
+//                v = null;
+            }
+            else if (menuType == AudioList) {
+                v = null;
+                type = ListData.AUDIO;
             }
             else
             {

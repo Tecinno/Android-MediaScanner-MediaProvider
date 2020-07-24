@@ -24,7 +24,7 @@ public class MediaProvider extends ContentProvider {
         System.loadLibrary("native-lib");
     }
 //    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
-    static final String scanPath = "/sdcard/android_ubuntu";//sdcard/android_ubuntu  /udisk
+    static final String scanPath = "/sdcard";//sdcard/android_ubuntu  /udisk
     static final String ACTION_MEDIA_MOUNTED = "android.intent.action.MEDIA_MOUNTED";
     static final String PROVIDER_NAME = "media.scan";
     static final String AUDIO_STRING_URL = "content://" + PROVIDER_NAME + "/audio";

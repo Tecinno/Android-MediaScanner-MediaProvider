@@ -32,7 +32,9 @@ public class FolderList extends AppCompatActivity {
     final static private int Folder = 0;
     final static private int AudioList = 1;
     final static private int VideoList = 2;
+    private TextView listCountText ;
     private ContentResolver contentResolver;//getContentResolver
+    private int menuType;
 //    private enum MenuType {
 //        FOLDER,ALLAUDIO,NEXT
 //    }
@@ -43,7 +45,7 @@ public class FolderList extends AppCompatActivity {
         Context context = this;
         contentResolver = context.getContentResolver();
         Intent intent = getIntent();
-        int menuType = intent.getIntExtra("menuType", Folder);
+        menuType = intent.getIntExtra("menuType", Folder);
         setView(menuType);
     }
     public void folderInit() {
@@ -57,18 +59,23 @@ public class FolderList extends AppCompatActivity {
     }
 
     public List<ListData> querydata(int  parentId, int menuType) {
-        Log.e(TAG, " querydata sun");
+        Log.e(TAG, " querydata first");
         String URL = "content://media.scan/folder_dir";
         Uri folderuri = Uri.parse(URL);
         String AURL = "content://media.scan/audio";
         Uri audio = Uri.parse(AURL);
+        String VURL = "content://media.scan/video";
+        Uri video = Uri.parse(VURL);
         List<ListData> list = new ArrayList();
         String parent_id = String.valueOf(parentId);
         if (menuType == Folder) {
             Cursor c = getContentResolver().query(folderuri, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
-            Log.e("query", "============folder================ ");
+            Log.e(TAG, "============folder================ ");
             if (c == null)
+            {
                 Log.e(TAG, "c == null ");
+                return null;
+            }
             if (c.moveToFirst()) {
                 do{
                     Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
@@ -78,45 +85,64 @@ public class FolderList extends AppCompatActivity {
                     fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
                     fol.fileTypte = ListData.FOLDER;
                     list.add(fol);
-                    Log.e("query", " folder list count "+list.size());
+//                    Log.e("query", " folder list count "+list.size());
                 } while (c.moveToNext());
                 c.close();
             }
         }
-        Log.e("query", "============audio================ ");
+        Log.e(TAG, "============audio================ ");
         Cursor a;
-        if (menuType == AudioList) {
-            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null, null,null);
-        } else
-            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
+        int type;
+        if (menuType == AudioList) //判断类型，防止数据中parent_id为null
+        {
+            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+            type = ListData.AUDIO;
+        }
+        else if (menuType == VideoList)
+        {
+            a = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+            type = ListData.VIDEO;
+        }
+        else
+        {
+            a = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
+            type = ListData.AUDIO;
+        }
         if (a == null)
+        {
             Log.e(TAG, "a == null ");
+            return null;
+        }
         if (a.moveToFirst()) {
             do{
-                Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
-                ListData fol = new ListData(ListData.FOLDER);
+//                Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                ListData fol = new ListData(type);
                 fol.setId(a.getInt(a.getColumnIndex( "_id")));
                 fol.setName(a.getString(a.getColumnIndex( MediaProvider.NAME)));
                 fol.setPath(a.getString(a.getColumnIndex( MediaProvider.PATH)));
-                fol.fileTypte = ListData.AUDIO;
+                if(fol.getName() == null && fol.getPath() != null) {
+                    fol.setName(fol.getPath().substring(fol.getPath().lastIndexOf("/")+1));
+                }
+//                fol.fileTypte = ListData.AUDIO;
                 list.add(fol);
-                Log.e("query", "  list count "+list.size());
+//                Log.e(TAG, "  list count "+list.size());
             } while (a.moveToNext());
             a.close();
         }
-
+        listCountText.setText("list count : " + list.size());
         return list;
     }
 
     private void  setView(int menuType)
     {
+        listCountText = this.findViewById(R.id.listcount);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         recycleview = (RecyclerView)findViewById(R.id.recycleview);
         recycleview.setLayoutManager(manager);
 
         List<ListData> list = querydata(0, menuType);
-        mAdapter = new FileAdapter(getApplicationContext(),list);
+        mAdapter = new FileAdapter(getApplicationContext(),list, menuType);
         recycleview.setAdapter(mAdapter);
         recycleview.setNestedScrollingEnabled(true);
         // 给RecycleView加入滑动监听
@@ -137,6 +163,7 @@ public class FolderList extends AppCompatActivity {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (isScrollToEnd(recycleview)) {
                     Log.e("tag", "============scroll to end");
+                    mAdapter.refreshList();
                     index += 1;
                 }
             }
@@ -162,12 +189,16 @@ public class FolderList extends AppCompatActivity {
         private MediaProvider mediaProvider = new MediaProvider();
         private String TAG = "Scanner";
         private List<Integer> folderidlist;
-        public FileAdapter(Context context, List<ListData> items) {
+        private int menuType;
+//        private TextView listCountText;
+        public FileAdapter(Context context, List<ListData> items, int menuType) {
             super();
             mItems = items;
             mContext = context;
             folderidlist = new ArrayList<>();
             folderidlist.add(0);
+            listCountText = (TextView)findViewById(R.id.listcount);
+            this.menuType = menuType;//判断列表是文件夹还是歌曲列表
         }
 
         @Override
@@ -199,7 +230,7 @@ public class FolderList extends AppCompatActivity {
                 }
             });
         }
-
+        //返回到上级文件夹
         public void  backFolder() {
             int id;
             if (folderidlist.isEmpty()) {
@@ -209,7 +240,7 @@ public class FolderList extends AppCompatActivity {
 
             folderidlist.remove(folderidlist.size()-1);
             if (folderidlist.isEmpty()){
-                Log.e(TAG, " backFolder folderidlist back to root ");
+                Log.e(TAG, " backFolder folderidlist back to menu ");
                 Intent intent = new Intent();
                     intent.setClass(mContext, Menu.class);
 //                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS | Intent.FLAG_RECEIVER_FOREGROUND);
@@ -218,21 +249,26 @@ public class FolderList extends AppCompatActivity {
 
                 id = folderidlist.get(folderidlist.size()-1);
                 Log.e(TAG, " backFolder folderidlist id " + id);
-                mItems = querydata(id);
+                mItems = querydata(id, Folder);
                 notifyDataSetChanged();
             }
         }
-
+        //打开一个文件夹
         private void openfolder(int id) {
             Log.e(TAG, " openfolder  id " + id);
             if (id > 0) {
                 folderidlist.add(id);
-                mItems = querydata(id);
+                mItems = querydata(id, menuType);
                 notifyDataSetChanged();
             } else {
                 Log.e(TAG, " openfolder  error id: " + id);
             }
 
+        }
+        public void refreshList() {
+            Log.e(TAG, " refreshList");
+            mItems = querydata(folderidlist.get(folderidlist.size()-1), menuType);
+            notifyDataSetChanged();
         }
 
         @Override
@@ -249,45 +285,103 @@ public class FolderList extends AppCompatActivity {
             }
         }
 
-        public List<ListData> querydata(int  parentId) {
+        public List<ListData> querydata(int  parentId, int menuType) {
             Log.e(TAG, " querydata sun");
             String URL = "content://media.scan/folder_dir";
             Uri folderuri = Uri.parse(URL);
             String AURL = "content://media.scan/audio";
             Uri audio = Uri.parse(AURL);
+            String VURL = "content://media.scan/video";
+            Uri video = Uri.parse(VURL);
             List<ListData> list = new ArrayList();
             String parent_id = String.valueOf(parentId);
-            Cursor c = mContext.getContentResolver().query(folderuri, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
-            Log.e("query", "============folder================ ");
-            if (c == null)
-                Log.e(TAG, "c == null ");
-            if (c.moveToFirst()) {
-                do{
-                    Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
-                    ListData fol = new ListData(ListData.FOLDER);
-                    fol.setId(c.getInt(c.getColumnIndex( "_id")));
-                    fol.setName(c.getString(c.getColumnIndex( MediaProvider.NAME)));
-                    fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
-                    list.add(fol);
-                } while (c.moveToNext());
-                c.close();
+            Cursor c;
+            if (menuType == Folder) {
+                c = mContext.getContentResolver().query(folderuri, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
+                Log.e(TAG, "============folder================ ");
+                if (c == null)
+                {
+                    Log.e(TAG, "c == null ");
+                    return null;
+                }
+                if (c.moveToFirst()) {
+                    do{
+                        Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( "_id"))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
+                        ListData fol = new ListData(ListData.FOLDER);
+                        fol.setId(c.getInt(c.getColumnIndex( "_id")));
+                        fol.setName(c.getString(c.getColumnIndex( MediaProvider.NAME)));
+                        fol.setPath(c.getString(c.getColumnIndex( MediaProvider.PATH)));
+                        list.add(fol);
+                    } while (c.moveToNext());
+                    c.close();
+                }
             }
-            Log.e("query", "============audio================ ");
-            Cursor a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},null);
+
+            Log.e(TAG, "============audio================ ");
+            Cursor a;
+            int type;
+            if (menuType == AudioList) //判断类型，防止数据中parent_id为null
+            {
+                a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+                type = ListData.AUDIO;
+            } else
+            {
+                a = mContext.getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
+                type = ListData.AUDIO;
+            }
             if (a == null)
+            {
                 Log.e(TAG, "a == null ");
+                return null;
+            }
             if (a.moveToFirst()) {
                 do{
-                    Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
-                    ListData fol = new ListData(ListData.AUDIO);
+//                    Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                    ListData fol = new ListData(type);
                     fol.setId(a.getInt(a.getColumnIndex( "_id")));
                     fol.setName(a.getString(a.getColumnIndex( MediaProvider.NAME)));
                     fol.setPath(a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                    if(fol.getName() == null && fol.getPath() != null) {
+                        fol.setName(fol.getPath().substring(fol.getPath().lastIndexOf("/")+1));
+                    }
                     list.add(fol);
                 } while (a.moveToNext());
                 a.close();
             }
 
+            Log.e(TAG, "============video================ ");
+            Cursor v;
+            if (menuType == VideoList)
+            {
+                v = mContext.getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+                type = ListData.VIDEO;
+            }
+            else
+            {
+                v = mContext.getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
+                type = ListData.VIDEO;
+            }
+            if (v == null)
+            {
+                Log.e(TAG, "v == null ");
+                return null;
+            }
+            if (v.moveToFirst()) {
+                do{
+//                    Log.e(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                    ListData fol = new ListData(type);
+                    fol.setId(v.getInt(v.getColumnIndex( "_id")));
+                    fol.setName(v.getString(v.getColumnIndex( MediaProvider.NAME)));
+                    fol.setPath(v.getString(v.getColumnIndex( MediaProvider.PATH)));
+                    if(fol.getName() == null && fol.getPath() != null) {
+                        fol.setName(fol.getPath().substring(fol.getPath().lastIndexOf("/")+1));
+                    }
+                    list.add(fol);
+                } while (v.moveToNext());
+                v.close();
+            }
+
+            listCountText.setText("list count : " + list.size());
             return list;
         }
     }

@@ -11,8 +11,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.os.storage.StorageManager;
+import android.system.Os;
 import android.util.Log;
-
+import android.os.storage.StorageVolume;
+import java.io.File;
 import java.util.Locale;
 
 public class MediaProvider extends ContentProvider {
@@ -36,6 +39,8 @@ public class MediaProvider extends ContentProvider {
     static final int AUDIO = 1;
     static final int VIDEO = 2;
     static final int FOLDER = 3;
+    static final String DATABASE_NAME = "external_udisk.db";
+    String oldVolume = "";
     static final UriMatcher uriMatcher;
     static{
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -59,7 +64,7 @@ public class MediaProvider extends ContentProvider {
         // final int volumeID = (volumeInfo == null) ? -1 : volumeInfo.getVolumeID();
         // String dbName = "external-" + Integer.toHexString(volumeID) + ".db";
 
-        static final String DATABASE_NAME = "external_udisk.db";
+
 
         static final int DATABASE_VERSION = 1;
 
@@ -122,7 +127,7 @@ public class MediaProvider extends ContentProvider {
                 "parent_id INTEGER," +
                 "_name TEXT NOT NULL," +
                 "_path TEXT NOT NULL," +
-                "dir_layer TEXT NOT NULL," +
+                "dir_layer TEXT," +
                 "has_audio INTEGER," +
                 "has_video INTEGER" +
                 ");";
@@ -136,12 +141,12 @@ public class MediaProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db)
         {
-//            db.execSQL(CREATE_DB_AUDIO_TABLE);
-//            db.execSQL(CREATE_DB_VIDEO_TABLE);
-//            db.execSQL(CREATE_DB_AUDIO_LIST_TABLE);
-//            db.execSQL(CREATE_DB_VIDEO_LIST_TABLE);
-//            db.execSQL(CREATE_DB_FLODER_DIR_TABLE);
-//            db.execSQL(CREATE_DB_ALBUM_TABLE);
+            db.execSQL(CREATE_DB_AUDIO_TABLE);
+            db.execSQL(CREATE_DB_VIDEO_TABLE);
+            db.execSQL(CREATE_DB_AUDIO_LIST_TABLE);
+            db.execSQL(CREATE_DB_VIDEO_LIST_TABLE);
+            db.execSQL(CREATE_DB_FLODER_DIR_TABLE);
+            db.execSQL(CREATE_DB_ALBUM_TABLE);
         }
 
         @Override
@@ -187,7 +192,32 @@ public class MediaProvider extends ContentProvider {
 
         if (values.get(NAME).equals("open database")) {
             Log.e(TAG,"open database start:");
-            mediascanner();
+            StorageManager storageManager = (StorageManager) getContext().getSystemService(Context.STORAGE_SERVICE);
+            File path = new File(scanPath);
+            int isNewVolume = 0;
+            if (path != null) {
+                final StorageVolume volumeInfo = storageManager.getStorageVolume(path);
+                String volumeId = volumeInfo.getUuid() == null ? "001" : volumeInfo.getUuid();
+                if(oldVolume.equals(volumeId)) {
+                    Log.e(TAG,"old volume : "+ volumeId);
+                } else{
+                    oldVolume = volumeId;
+                    getContext().deleteDatabase(DATABASE_NAME);
+                    DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+                    db = dbHelper.getWritableDatabase();//创建数据库
+                    if(db != null) {
+                        isNewVolume = 1;
+                        Log.e(TAG,"delete old db and creat new db sucess ");
+                    }
+
+                    Log.e(TAG,"new volume : "+ volumeId);
+                }
+
+
+                mediascanner(isNewVolume);
+            } else
+                Log.e(TAG,"path is null : "+ path);
+
             Log.e(TAG,"open database finish:");
             return uri;
         }
@@ -273,13 +303,14 @@ public class MediaProvider extends ContentProvider {
         }
         return mediaTable;
     }
-    public void mediascanner(){
+    public void mediascanner(int isNewVolume){
+        Log.e(TAG,"mediascanner : "+ isNewVolume);
         long startTime = System.nanoTime();
 //        String scanPath = "/sdcard/android_ubuntu";
-        scan(scanPath);
+        scan(scanPath, isNewVolume);
         long endTime = System.nanoTime();
         Log.e(TAG,"all scan resume time : " + (endTime-startTime)/1000000.0 + " ms");
     }
 
-    public native int[] scan(String scanPath);
+    public native int[] scan(String scanPath, int isNewVolume);
 }

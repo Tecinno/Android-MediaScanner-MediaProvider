@@ -38,5 +38,9 @@ public class Menu extends AppCompatActivity {
         intent.putExtra("menuType", AudioList);
         startActivity(intent);
     }
-
+    public void videolist_button(View view) {
+        Intent intent = new Intent(this, FolderList.class);
+        intent.putExtra("menuType", VideoList);
+        startActivity(intent);
+    }
 }

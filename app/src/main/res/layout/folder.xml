@@ -13,10 +13,17 @@
 
         <Button
             android:id="@+id/button_up"
-            android:layout_width="match_parent"
+            android:layout_width="560dp"
             android:layout_height="match_parent"
             android:onClick="folderback"
             android:text="返回上级" />
+
+        <TextView
+            android:id="@+id/listcount"
+            android:layout_width="163dp"
+            android:layout_height="35dp"
+            android:text="list count" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -33,6 +40,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical"/>
+
+
     </LinearLayout>
 
 

@@ -14,12 +14,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -57,6 +60,20 @@ public class MainActivity extends AppCompatActivity {
         audioData = new CurrentAudioData();
         videoData = new CurrentVideoData();
         getPermission();
+        Window window = getWindow();
+        try {
+            WindowManager.LayoutParams params = window.getAttributes();
+            Class<WindowManager.LayoutParams> aClass = WindowManager.LayoutParams.class;
+            Field field = aClass.getDeclaredField("PRIVATE_FLAG_NO_MOVE_ANIMATION");
+            field.setAccessible(true);
+            int flag = (int) field.get(params);
+            params.flags = flag;
+//            window.setAttributes(params);
+            window.setFlags(flag, flag);
+        }catch (Exception e) {
+
+        }
+
     }
 
 
@@ -114,6 +131,11 @@ public class MainActivity extends AppCompatActivity {
             audioData.path = c.getString(c.getColumnIndex("_path"));
             audioData.id = c.getInt(c.getColumnIndex("_id"));
             audioData.name = c.getString(c.getColumnIndex("_name"));
+            if (audioData.name == null && audioData.path != null) {
+
+                audioData.name = audioData.path.substring(audioData.path.lastIndexOf("/")+1);
+                Log.e(TAG, "audioData name null : "+audioData.name);
+            }
         }
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {

@@ -28,6 +28,7 @@
         android:id="@+id/button4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:onClick="videolist_button"
         android:text="所有视频列表" />
 
     <Button

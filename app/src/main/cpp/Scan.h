@@ -40,15 +40,17 @@ namespace android {
             folder
         };
         sqlite3 *mdb;
-        int insertcount;
+//        int insertcount;
 //        char pathRoot[1024];
         int rootPathLen;
         std::list<std::string> mediaList;
+//        char oldVolume[64];
+        bool isNewVolume;
     public:
         Scan();
         ~Scan();
         int getId(const char* path);
-        int ProcessDirectory(const char *path, bool firstScan);
+        int ProcessDirectory(const char *path, int isNewVolume, bool firstScan);
         static int callback(void *data, int args_num, char **columnValue, char **columnName);
 
     private:
@@ -59,7 +61,7 @@ namespace android {
         bool open_database(sqlite3* &mdb);
         bool scanFile(sqlite3 *db,const  char* path, mediaType type, int parentId, const int dirLayer, bool firstScan);
         int checkFileNeedUpdate(const char* path, int mtime, mediaType type);
-        sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* selectArg);
+        sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* index, const char* selectArg);
         bool updateFolderHaveMedia(sqlite3 *db, int id, mediaType type);
         bool delete_old_data(std::string& list);
 

@@ -1,0 +1,3 @@
+F:/software/android_studio/MediaProvider/MediaScanner/app/.cxx/cmake/debug/x86/CMakeFiles/native-lib.dir
+F:/software/android_studio/MediaProvider/MediaScanner/app/.cxx/cmake/debug/x86/CMakeFiles/edit_cache.dir
+F:/software/android_studio/MediaProvider/MediaScanner/app/.cxx/cmake/debug/x86/CMakeFiles/rebuild_cache.dir

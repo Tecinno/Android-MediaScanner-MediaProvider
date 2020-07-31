@@ -4,8 +4,12 @@ import androidx.appcompat.app.AppCompatActivity;
 //import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
@@ -23,9 +27,10 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import android.os.Trace;
 public class MainActivity extends AppCompatActivity {
     final static String TAG = "Scanner";
     private MediaPlayer player = new MediaPlayer();
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView genreText ;
     private TextView albumText ;
     private TextView artistText ;
+    private MyBroadcastReceiver broad;
     private enum PlayType {
         DEFAULT,LAST,NEXT
     }
@@ -57,26 +63,87 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         findViews();
+//        Intent intent = getIntent();
+//        int event = intent.getIntExtra("event", 0);
+//        if (event == 1) {
+//            Log.e(TAG, "event == 1");
+//            showDiaglog();
+//        }
+
         audioData = new CurrentAudioData();
         videoData = new CurrentVideoData();
+        //注册广播
+        intentRegister();
         getPermission();
         Window window = getWindow();
         try {
-            WindowManager.LayoutParams params = window.getAttributes();
-            Class<WindowManager.LayoutParams> aClass = WindowManager.LayoutParams.class;
-            Field field = aClass.getDeclaredField("PRIVATE_FLAG_NO_MOVE_ANIMATION");
-            field.setAccessible(true);
-            int flag = (int) field.get(params);
-            params.flags = flag;
-//            window.setAttributes(params);
-            window.setFlags(flag, flag);
+//            WindowManager.LayoutParams params = window.getAttributes();
+//            Class<WindowManager.LayoutParams> aClass = WindowManager.LayoutParams.class;
+//            Field field = aClass.getDeclaredField("PRIVATE_FLAG_NO_MOVE_ANIMATION");
+//            field.setAccessible(true);
+//            int flag = (int) field.get(params);
+//            params.flags = flag;
+////            window.setAttributes(params);
+//            window.setFlags(flag, flag);
         }catch (Exception e) {
 
         }
 
     }
+    //注册广播
+    private void intentRegister() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("android.net.conn.media");
+//        intentFilter.addAction("android.intent.action.MEDIA_MOUNTED");
+//        intentFilter.addDataScheme("file");
+        broad = new MyBroadcastReceiver();
+        registerReceiver(broad, intentFilter);
+    }
+    //广播接收测试
+    public class MyBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context content, Intent intent){
+            final String action = intent.getAction();
+            Log.e(TAG, "MainActivity MyBroadcastReceiver + "+ action);
+//            startMyActivity();
+//            showDiaglog();
+        }
+    }
+    //启动测试
+    private void startMyActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("event",1);
+        startActivity(intent);
+    }
+    //广播测试
+    public void sendBroad() {
+        Intent intent = new Intent();
+        intent.setAction("android.net.conn.media");
+        sendBroadcast(intent);
+        Log.e(TAG,"sendBroad OK");
+    }
+    //弹窗测试
+    private void showDiaglog() {
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        map.put(0,0);
+        int a = map.get(1).intValue();
+        Log.e(TAG, "MainActivity showDiaglog   ");
+        Dialog dialog = new Dialog(this);
+        //去掉标题线
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog);
+        //背景透明
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.show();
 
-
+        Window window = dialog.getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+//        lp.gravity = Gravity.CENTER; // 居中位置
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        window.setAttributes(lp);
+        window.setWindowAnimations(R.style.mystyle);  //添加动画
+    }
     public void getPermission(){
         Log.e(TAG, "getPermission");
         int permissionread = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -88,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void showAudio(PlayType type) {
+        Trace.beginSection("showAudio");
         Log.e(TAG, "showAudio");
         Uri music = Uri.parse( "content://media.scan/audio");
         Cursor c;
@@ -159,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
 //            Log.e(TAG, "showAudio cursor is null");
 //        }
         c.close();
+        Trace.endSection();
     }
 
     private void findViews() {
@@ -183,8 +252,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void videoMenu(View view) {
-        Intent intent = new Intent(this, Video.class);
-        startActivity(intent);
+//        Intent intent = new Intent(this, Video.class);
+//        startActivity(intent);
+//        sendBroad();
+//        showDiaglog();
     }
 
 
@@ -470,6 +541,14 @@ public class MainActivity extends AppCompatActivity {
         showAudio(PlayType.DEFAULT);
         play();
     }
+
+    @Override
+    protected void onDestroy() {
+        Log.e(TAG, "MainActivity onDestroy ");
+        unregisterReceiver(broad);
+        super.onDestroy();
+    }
+
 
     /**
      * A native method that is implemented by the 'native-lib' native library,

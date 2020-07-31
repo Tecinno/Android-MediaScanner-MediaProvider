@@ -17,14 +17,14 @@ import android.util.Log;
 import android.os.storage.StorageVolume;
 import java.io.File;
 import java.util.Locale;
-
+import android.os.Trace;
 public class MediaProvider extends ContentProvider {
-    final static String TAG = "ScannerProvider";
+    final static String TAG = "Scanner";
     static {
         System.loadLibrary("native-lib");
     }
-//    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
-    static final String scanPath = "/sdcard";//sdcard/android_ubuntu  /udisk
+    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
+//    static final String scanPath = "/sdcard";//sdcard/android_ubuntu  /udisk
     static final String ACTION_MEDIA_MOUNTED = "android.intent.action.MEDIA_MOUNTED";
     static final String PROVIDER_NAME = "media.scan";
     static final String AUDIO_STRING_URL = "content://" + PROVIDER_NAME + "/audio";
@@ -175,6 +175,7 @@ public class MediaProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
+        Trace.beginSection("insert");
         /**
          * 添加新学生记录
          */
@@ -219,6 +220,7 @@ public class MediaProvider extends ContentProvider {
                 Log.e(TAG,"path is null : "+ path);
 
             Log.e(TAG,"open database finish:");
+            Trace.endSection();
             return uri;
         }
 
@@ -304,12 +306,14 @@ public class MediaProvider extends ContentProvider {
         return mediaTable;
     }
     public void mediascanner(int isNewVolume){
+        Trace.beginSection("mediascanner");
         Log.e(TAG,"mediascanner : "+ isNewVolume);
         long startTime = System.nanoTime();
 //        String scanPath = "/sdcard/android_ubuntu";
         scan(scanPath, isNewVolume);
         long endTime = System.nanoTime();
         Log.e(TAG,"all scan resume time : " + (endTime-startTime)/1000000.0 + " ms");
+        Trace.endSection();
     }
 
     public native int[] scan(String scanPath, int isNewVolume);

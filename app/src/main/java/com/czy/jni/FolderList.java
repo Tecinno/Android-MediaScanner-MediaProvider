@@ -22,7 +22,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
+import android.os.Trace;
 public class FolderList extends AppCompatActivity {
 
     private RecyclerView recycleview;
@@ -59,6 +59,7 @@ public class FolderList extends AppCompatActivity {
     }
 
     public List<ListData> querydata(int  parentId, int menuType) {
+        Trace.beginSection("querydata");
         Log.e(TAG, " querydata first");
         String URL = "content://media.scan/folder_dir";
         Uri folderuri = Uri.parse(URL);
@@ -130,6 +131,7 @@ public class FolderList extends AppCompatActivity {
             a.close();
         }
         listCountText.setText("list count : " + list.size());
+        Trace.endSection();
         return list;
     }
 
@@ -286,6 +288,7 @@ public class FolderList extends AppCompatActivity {
         }
 
         public List<ListData> querydata(int  parentId, int menuType) {
+            Trace.beginSection("querydata sun");
             Log.e(TAG, " querydata sun");
             String URL = "content://media.scan/folder_dir";
             Uri folderuri = Uri.parse(URL);
@@ -393,6 +396,7 @@ public class FolderList extends AppCompatActivity {
             }
 
             listCountText.setText("list count : " + list.size());
+            Trace.endSection();
             return list;
         }
     }

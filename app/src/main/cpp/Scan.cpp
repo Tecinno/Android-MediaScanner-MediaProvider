@@ -24,6 +24,8 @@ static const char *videoType[] = {".mp4", ".3Gp", ".m4v", ".avi"};
 static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
 static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
 static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
+static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
+//static sqlite3 *mdb = Scan::creat_database();
 
     Scan::Scan(){
     };
@@ -40,9 +42,10 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 
 
 
-    int Scan::ProcessDirectory(const char *path, int isNewVol, bool firstScan) {
+    int Scan::ProcessDirectory(const char *path, int isNewVol, bool isfirstScan) {
 
         printf("ProcessDirectory %d", isNewVol);
+        firstScan = isfirstScan;
 //        return 0;
         clock_t  start = clock();
         struct stat statbuf;
@@ -80,7 +83,8 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 //        oldVolume = volumeId;
 
         //================open database===============
-        if (creat_database(mdb) == -1) {
+        mdb = creat_database();
+        if (mdb == NULL) {
             printf("creat_database failed\n");
             return -1;
         }
@@ -91,14 +95,20 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 
 
         q1.push(root);
-        prescan();
+        if(firstScan)
+            prescan();
         while(!q1.empty()) {
             sDirEntry dir_entry_parent = q1.front();
             //dirLayer control
             dirLayer = dir_entry_parent.depth;
             if (dirLayer >= 100) {
                 printf("MediaScanner::doProcessDirectoryEntry  dirLayer is %d >= 100 \n",dir_entry_parent.depth);
+                flush();
+                pthread_mutex_lock(&db_lock);
                 sqlite3_close(mdb);
+                pthread_mutex_unlock(&db_lock);
+                printf("MediaScanner::doProcessDirectory finish, audioCount = %d, videoCount = %d, dirLayer = %d, dirCount = %d \n",
+                       audioCount, videoCount, dirLayer, dirCount);
                 return MEDIA_SCAN_RESULT_SKIPPED;
             }
             DIR *dir_p = opendir(dir_entry_parent.abs_file_name_p);
@@ -128,7 +138,16 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                 } else {
                     ++filecount;
                 }
-
+                if (audioCount >= 9999 && videoCount >= 9999) {
+                    printf(" doProcessDirectory audioCount >= 9999 && videoCount > 9999 \n");
+                    flush();
+                    pthread_mutex_lock(&db_lock);
+                    sqlite3_close(mdb);
+                    pthread_mutex_unlock(&db_lock);
+                    printf("MediaScanner::doProcessDirectory finish, audioCount = %d, videoCount = %d, dirLayer = %d, dirCount = %d \n",
+                           audioCount, videoCount, dirLayer, dirCount);
+                    return MEDIA_SCAN_RESULT_SKIPPED;
+                }
                 if ((sizeof(dir_entry_parent.abs_file_name_p) + sizeof(dir_entity_p->d_name) + 1 ) >= 4096) {
                     printf("path is too long : %s%s !!! \n",dir_entry_parent.abs_file_name_p,dir_entity_p->d_name);
                     continue;
@@ -157,13 +176,14 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                 //=======================start query parent_id=====================
                 //find folder or file parent folder id,save in parent_id
                 //audio ,video or folder will use it
-//                if (!firstScan) {
-                    parent_id = getId(dir_entry_parent.abs_file_name_p);
-                    if (parent_id == -1) {
-                        printf("getParentId fail !!!\n");
-                        parent_id = 0;
-                    }
-//                } else
+//                if (firstScan) {
+//                    parent_id = getId(dir_entry_parent.abs_file_name_p);
+//                    if (parent_id == -1) {
+//                        printf("getParentId fail !!!\n");
+//                        parent_id = 0;
+//                    }
+//                }
+//                else
 //                    parent_id = 0;
 
                 //=======================end query parent_id=====================
@@ -187,7 +207,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                                         printf("mdb == NULL when audio scanFile");
                                         return -1;
                                     }
-                                }else if (scanFile(mdb, fileNameStore, audio, parent_id, dirLayer, firstScan) == true) {
+                                }else if (scanFile(mdb, fileNameStore, audio, parent_id, dirLayer) == true) {
                                     ++audioCount;
                                     // printf("insert sqlite3 %s ,success\n", fileNameStore);
                                 } else
@@ -196,6 +216,8 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                             }
                         }
                     }
+//                    else
+//                        printf("audio is more than 9999 !!!\n");
                     if (videoCount < 9999 && !findMediaFile) {
                         for (int i = 0; i < videoSize; i++) {
                             if (!strcasecmp(nameSuffix, videoType[i])) {
@@ -207,7 +229,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                                         printf("mdb == NULL");
                                         return -1;
                                     }
-                                }else if (scanFile(mdb, fileNameStore, video, parent_id, dirLayer, firstScan) == true) {
+                                }else if (scanFile(mdb, fileNameStore, video, parent_id, dirLayer) == true) {
                                     ++videoCount;
                                     // printf("insert sqlite3 %s ,success\n", fileNameStore);
                                 } else
@@ -216,14 +238,18 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                             }
                         }
                     }
-
-
-
                 } else if (type == DT_DIR) {
 //                    printf("DT_DIR fileNameStore %s",fileNameStore);
                     // all dir count could not more than 9999
                     if (dirCount > 9999) {
                         printf("MediaScanner::doProcessDirectoryEntry  dirCount is %d >= 9999 \n",dirCount);
+                        printf("flushall");
+                        flush();
+                        pthread_mutex_lock(&db_lock);
+                        sqlite3_close(mdb);
+                        pthread_mutex_unlock(&db_lock);
+                        printf("MediaScanner::doProcessDirectory finish, audioCount = %d, videoCount = %d, dirLayer = %d, dirCount = %d \n",
+                               audioCount, videoCount, dirLayer, dirCount);
                         return MEDIA_SCAN_RESULT_SKIPPED;
                     } else {
                         ++dirCount;
@@ -263,8 +289,15 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         }
         // sqlite3_close(db);
         if (mdb != NULL) {
-            flush(mdb, firstScan);
+            printf("flushall");
+            flush();
+//            printf("flushall wait lock");
+            pthread_mutex_lock(&db_lock);
+//            printf("flushall get lock");
+//            sqlite3_wal_checkpoint(mdb, 0);
             sqlite3_close(mdb);
+//            printf("flushall release lock");
+            pthread_mutex_unlock(&db_lock);
         }else
             printf("mdb is NULL when close db");
         clock_t  end = clock();
@@ -357,8 +390,11 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
     get folder Id in folder_dir
 */
     int Scan::getId(const char* path) {
+
+        open_database(mdb);
         if (mdb == NULL){
-            open_database(mdb);
+            printf("getId db is null !!\n");
+            return -1;
         }
         sqlite3_stmt* stmt = NULL;
         const char* zTail;
@@ -376,16 +412,28 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         memset(pathBuf, 0, sizeof(pathBuf));
         memcpy(pathBuf, dirSuffix, strlen(dirSuffix));//保存这次查询的文件夹
 
+
+        //获取锁
+//        printf("getId wait db_lock\n");
+        pthread_mutex_lock(&db_lock);
+//        printf("getId get db_lock\n");
         std::string sql = "select _id from folder_dir indexed by folder_path_index where _path = '";//查询文件夹的id
         sql.append(path);
         sql.append("'");
+//        printf("getId begin %s\n",sql.c_str());
         if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 int parent_id = sqlite3_column_int(stmt, 0);
                 sqlite3_finalize(stmt);
                 pathBufId = parent_id;
+                //释放锁
+//                printf("getId release db_lock\n");
+                pthread_mutex_unlock(&db_lock);
                 return parent_id;
             } else {
+                //释放锁
+//                printf("getId release db_lock\n");
+                pthread_mutex_unlock(&db_lock);
 //                printf("getId %s no find \n",dirSuffix);
                 int len = strlen(path) - strlen(dirSuffix) - 1;
                 char parentPath[len + 1];
@@ -395,21 +443,38 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
                 if (parentid != -1)
                     insertFolder(mdb, path, parentid); //如果没有找到对应folder，就插入
                 sqlite3_finalize(stmt);
+                //获取锁
+//                printf("getId wait db_lock\n");
+                pthread_mutex_lock(&db_lock);
+//                printf("getId get db_lock\n");
                 sql = "select _id from folder_dir order by _id desc LIMIT 1";//获取刚刚插入的id
+                int step_result;
+//                printf("getId begin %s\n",sql.c_str());
                 if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
-                    if (sqlite3_step(stmt) == SQLITE_ROW) {
-                        int id = sqlite3_column_int(stmt, 0);
-                        sqlite3_finalize(stmt);
-                        pathBufId = id;
-                        return id;
-                    }
+                    step_result = sqlite3_step(stmt);
+                        if (step_result == SQLITE_ROW) {
+                            int id = sqlite3_column_int(stmt, 0);
+                            sqlite3_finalize(stmt);
+                            pathBufId = id;
+                            //释放锁
+//                            printf("getId release db_lock\n");
+                            pthread_mutex_unlock(&db_lock);
+                            return id;
+                        }
                 }
                 pathBufId = 0;
+                //释放锁
+//                printf("getId release db_lock\n");
+                pthread_mutex_unlock(&db_lock);
                 return 0;
             }
         } else {
+
             printf("sqlite3_prepare_v2 fail\n");
             sqlite3_finalize(stmt);
+            //释放锁
+//            printf("getId release db_lock\n");
+            pthread_mutex_unlock(&db_lock);
             return -1;
 
         }
@@ -553,39 +618,65 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         return MEDIA_NEED_INSERT;
     }
 
-    bool Scan::flush(sqlite3 *db, bool firstScan) {
+    bool Scan:: flush() {
         printf("flush  !!!\n");
+
         char* errMsg;
-        if (firstScan){
-            if (sqlite3_exec(db,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
-                printf("begin fail %s !!!\n", errMsg);
-                return false;
-            } else
-                printf("begin   !!!\n");
+//        if (firstScan){
+//            if (sqlite3_exec(mdb,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+//                printf("begin fail %s !!!\n", errMsg);
+//                return false;
+//            } else
+//                printf("begin   !!!\n");
+//        }
+
+
+
+        pthread_mutex_lock(&db_lock);
+        if (firstScan) {
+            mediaListBuf.clear();
+            std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
+            mediaList.clear();
+            printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
+            pthread_t tid;
+            pthread_create(&tid, NULL, flushToDB, (void *)this);
+            pthread_detach(tid);
+        }else {
+            std::list<std::string>::iterator ctr;
+            for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
+                std::string sql = *ctr;
+                int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
+                if (rs != SQLITE_OK) {
+                    printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+                }
+            }
+            mediaList.clear();
+            pthread_mutex_unlock(&db_lock);
         }
 
-        std::list<std::string>::iterator ctr;
-        for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
-            std::string sql = *ctr;
-            int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-            if (rs != SQLITE_OK) {
-                printf("%s fail %s !!!\n", sql.c_str(), errMsg);
-//            sqlite3_exec(db,"rollback transaction;",0,0, &errMsg);
-//            printf("rollback transaction;  %s !!!\n",  errMsg);
+
+
+
+
+//        std::list<std::string>::iterator ctr;
+//        for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
+//            std::string sql = *ctr;
+//            int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
+//            if (rs != SQLITE_OK) {
+//                printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
+//            }
+//        }
+//        mediaList.clear();
+//        if (firstScan) {
+//            if (sqlite3_exec(mdb,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
+//                printf("commit fail %s !!!\n", errMsg);
 //                return false;
-            }
-//            else
-//                printf("%s", sql.c_str());
-        }
-        mediaList.clear();
-        if (firstScan) {
-            if (sqlite3_exec(db,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
-                printf("commit fail %s !!!\n", errMsg);
-                return false;
-            } else
-                printf("commit   !!!\n");
-        }
-        printf("flush  end !!!\n");
+//            } else
+//                printf("commit   !!!\n");
+//        }
+//        printf("flush  end !!!\n");
+
+
         return true;
     }
     /*
@@ -607,11 +698,11 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
             ss<<parentId;
             ss>>parent_id;
         }
-        value = "values ('";
+        value = "values (\"";
         value.append(path);
-        value.append("','");
+        value.append("\",\"");
         value.append(name);
-        value.append("',");
+        value.append("\",");
         value.append(parent_id);
         value.append(")");
         sql = "insert into folder_dir(_path, _name, parent_id) ";
@@ -625,7 +716,9 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
             return true;
         }
     }
-
+//    void* threadtest1(void *ptr) {
+//        printf("threadtest");
+//    }
     /*
      * The method insert or update audio/video/folder data to database
      *
@@ -635,7 +728,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
      * @param parentId : previous directory's id
      * @param parentId : directory's layer
      */
-    bool Scan::scanFile(sqlite3 *db, const char* path, mediaType type, int parentId, const int dirLayer, bool firstScan) {
+    bool Scan::scanFile(sqlite3 *db, const char* path, mediaType type, int parentId, const int dirLayer) {
         const char* name = strrchr(path, '/') + 1;
         // printf("scanFile parentId %s !!!\n", parentId);
         std::string sql;
@@ -679,36 +772,33 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
             if (checkFileResult == MEDIA_NEED_INSERT) {
                 if(firstScan) {
                     sql = "insert into audio(_path, parent_id) ";
-                    value = "values ('";
+                    value = "values (\"";
                     value.append(path);
-                    value.append("',");
+                    value.append("\",");
                     value.append(parent_id);
                     value.append(")");
                     sql.append(value);
-                }else {
-//                    updateFolderHaveMedia(db, parentId, audio);
-                    sql = "insert into audio(_path, _name, parent_id, size, mtime) ";
-                    value = "values ('";
-                    value.append(path);
-                    value.append("','");
-                    value.append(name);
-                    value.append("',");
-                    value.append(parent_id);
-                    value.append(",");
-                    value.append(size);
-                    value.append(",");
-                    value.append(mtime);
-                    value.append(")");
-                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
                 }
+//                else {
+////                    updateFolderHaveMedia(db, parentId, audio);
+//                    sql = "insert into audio(_path, _name, size, mtime) ";
+//                    value = "values ('";
+//                    value.append(path);
+//                    value.append("','");
+//                    value.append(name);
+//                    value.append("',");
+//                    value.append(size);
+//                    value.append(",");
+//                    value.append(mtime);
+//                    value.append(")");
+//                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
+//                }
             } else if (checkFileResult == MEDIA_NEED_UPDATE && !firstScan) {
                 sql = "update audio set ";
                 value = "_path = '";
                 value.append(path);
                 value.append("',_name = '");
                 value.append(name);
-                value.append("',parent_id = '");
-                value.append(parent_id);
                 value.append("',size = '");
                 value.append(size);
                 value.append("',mtime = '");
@@ -724,36 +814,35 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
             if (checkFileResult == MEDIA_NEED_INSERT) {
                 if(firstScan) {
                     sql = "insert into video(_path, parent_id) ";
-                    value = "values ('";
+                    value = "values (\"";
                     value.append(path);
-                    value.append("',");
+                    value.append("\",");
                     value.append(parent_id);
                     value.append(")");
                     sql.append(value);
-                }else {
-//                    updateFolderHaveMedia(db, parentId, video);
-                    sql = "insert into video(_path, _name, parent_id, size, mtime) ";
-                    value = "values ('";
-                    value.append(path);
-                    value.append("','");
-                    value.append(name);
-                    value.append("',");
-                    value.append(parent_id);
-                    value.append(",");
-                    value.append(size);
-                    value.append(",");
-                    value.append(mtime);
-                    value.append(")");
-                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
                 }
+//                else {
+////                    updateFolderHaveMedia(db, parentId, video);
+//                    sql = "insert into video(_path, _name, parent_id, size, mtime) ";
+//                    value = "values ('";
+//                    value.append(path);
+//                    value.append("','");
+//                    value.append(name);
+//                    value.append("',");
+//                    value.append(parent_id);
+//                    value.append(",");
+//                    value.append(size);
+//                    value.append(",");
+//                    value.append(mtime);
+//                    value.append(")");
+//                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
+//                }
             } else if (checkFileResult == MEDIA_NEED_UPDATE && !firstScan) {
                 sql = "update video set ";
                 value = "_path = '";
                 value.append(path);
                 value.append("',_name = '");
                 value.append(name);
-                value.append("',parent_id = '");
-                value.append(parent_id);
                 value.append("',size = '");
                 value.append(size);
                 value.append("',mtime = '");
@@ -765,58 +854,95 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
             } else {
                 return true;
             }
-        } else if (type == folder) {
-            if (checkFileResult == MEDIA_NEED_INSERT) {
-                value = "values ('";
-                value.append(path);
-                value.append("','");
-                value.append(name);
-                value.append("',");
-                value.append(layer);
-                value.append(",");
-                value.append(parent_id);
-                value.append(")");
-                sql = "insert into folder_dir(_path, _name, dir_layer, parent_id) ";
-                sql.append(value);
-            } else {
-                return true;
-            }
         }
+//        else if (type == folder) {
+//            if (checkFileResult == MEDIA_NEED_INSERT && firstScan) {
+//                value = "values ('";
+//                value.append(path);
+//                value.append("','");
+//                value.append(name);
+//                value.append("',");
+//                value.append(layer);
+//                value.append(",");
+//                value.append(parent_id);
+//                value.append(")");
+//                sql = "insert into folder_dir(_path, _name, dir_layer, parent_id) ";
+//                sql.append(value);
+//            } else {
+//                return true;
+//            }
+//        }
 
         mediaList.push_back(sql);
 //        printf("push_back : %s ,size %d\n", sql.c_str(), mediaList.size());
-        if (mediaList.size() >= 200) {
-            return  flush(mdb, firstScan);
+        if (mediaList.size() >= 300) {
+//            printf("scanfile wait db_lock  !!!\n");
+//            pthread_mutex_lock(&db_lock);
+//            printf("scanfile get db_lock  !!!\n");
+//            mediaListBuf.clear();
+//            std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
+//            mediaList.clear();
+//            printf("mediaListBuf size %d  !!!\n", mediaListBuf.size());
+//            pthread_t tid;
+//            pthread_create(&tid, NULL, flushToDB, (void *)this);
+//            pthread_detach(tid);
+
+            return flush();
+//            return  true;
         }
         return true;
+    }
+    void*  Scan::flushToDB(void *p) {
+        printf("flushToDB");
+        Scan* ptr = (Scan*)p;
+        sqlite3* mdb = ptr->mdb;
+        std::list<std::string> list = ptr->mediaListBuf;
+        bool mfirstScan = ptr->firstScan;
+        if (mdb == NULL) {
+            printf("flushToDB mdb IS NULL \n");
+//            printf("flushToDB release lock");
+            pthread_mutex_unlock(&db_lock);
+            return NULL;
+        }
+//        std::list<std::string>* ptr = (std::list<std::string>*) p;
+//        ptr->size();
+//        printf("flushToDB size %d \n", list.size());
+//        sqlite3* db;
+        char * errMsg;
+        if(mfirstScan) {
+            if (sqlite3_exec(mdb,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+                printf("flushToDB begin fail %s !!!\n", errMsg);
+                return NULL;
+            } else
+                printf("flushToDB begin  transaction!!!\n");
+        }
 
-//        if(insertcount == 0) {
-//            if (sqlite3_exec(db,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
-//                printf("begin fail %s !!!\n", errMsg);
-//                return false;
-//            }
-//            printf("begin transaction!!!\n");
-//        }
-//        ++insertcount;
-//        int rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-//        if (rs != SQLITE_OK) {
-//            printf("%s fail %s !!!\n", sql.c_str(), errMsg);
-////            sqlite3_exec(db,"rollback transaction;",0,0, &errMsg);
-////            printf("rollback transaction;  %s !!!\n",  errMsg);
-//            return false;
-//        } else {
-//            if(insertcount > ONCE_INSERT_COUNT) {
-//                insertcount = 0;
-//                if (sqlite3_exec(db,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
-//                    printf("commit fail %s !!!\n", errMsg);
-//                    return false;
-//                }
-//                printf("insert : %d \n", ONCE_INSERT_COUNT);
-//            }
-//            printf("%s ,success\n", sql.c_str());
-//
-//            return true;
-//        }
+
+        std::list<std::string>::iterator ctr;
+
+        for (ctr = list.begin(); ctr != list.end(); ++ctr) {
+            std::string sql = *ctr;
+//            printf("flushToDB sql %s \n", sql.c_str());
+            int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
+            if (rs != SQLITE_OK) {
+                printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
+            }
+//            else
+//                printf("flushToDB %s  success !\n", sql.c_str());
+        }
+
+        if(mfirstScan) {
+            if (sqlite3_exec(mdb,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
+                printf("flushToDB commit fail %s !!!\n", errMsg);
+                return NULL;
+            } else
+                printf("flushToDB commit  transaction !!!\n");
+        }
+
+        list.clear();
+//        printf("flushToDB release lock");
+        pthread_mutex_unlock(&db_lock);
+        return NULL;
     }
 
     /*
@@ -875,18 +1001,30 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         return true;
     }
 
-    int Scan::creat_database(sqlite3* &db) {
+    sqlite3* Scan::creat_database() {
         //==========open database====================
-//        sqlite3 *db;
-        int rc = sqlite3_open_v2(DBPATH1, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-        if (rc != SQLITE_OK) {
-            printf("open db error  !!!\n");
-            return -1;
-        }
-        sqlite3_exec(db,"PRAGMA synchronous = OFF; ",0,0,0);
-
-//        sqlite3 *db = open_database();
+        sqlite3 *db;
         char *errMsg;
+        int rs = sqlite3_open_v2(DBPATH1, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+        if (rs != SQLITE_OK) {
+            printf("open db error  !!!\n");
+            return NULL;
+        }
+//        if(!firstScan)
+//            return db;
+        rs = sqlite3_exec(db, "PRAGMA journal_mode=WAL", 0, 0, &errMsg);;
+        if (rs != SQLITE_OK) {
+            printf("PRAGMA journal_mode=WAL fail %s\n", errMsg);
+        } else
+            printf("PRAGMA journal_mode=WAL success\n");
+
+        rs = sqlite3_exec(db,"PRAGMA synchronous = OFF  ; ",0,0,0);
+        if (rs != SQLITE_OK) {
+            printf("PRAGMA synchronous = OFF fail %s\n", errMsg);
+        } else
+            printf("PRAGMA synchronous = OFF success\n");
+
+
         //===============creat audio table==============
         std::string sql = "CREATE TABLE IF NOT EXISTS audio("
         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"\
@@ -900,10 +1038,10 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         "artist TEXT"\
         ");";
         printf(" begin sqlite3_exec \n");
-        int rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);;
+         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE audio table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE audio table success\n");
 
@@ -917,7 +1055,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE audiolist table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE audiolist table success\n");
 
@@ -933,7 +1071,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE video table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE video table success\n");
 
@@ -946,7 +1084,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE videolist table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE videolist table success\n");
 
@@ -963,7 +1101,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE dir table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE dir table success\n");
 
@@ -980,7 +1118,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE dir table fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE dir table success\n");
 
@@ -991,7 +1129,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE video android_metadata fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE video android_metadata success\n");
         //===============audio_path_index 索引==============
@@ -999,7 +1137,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE AUDIO INDEX  fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE AUDIO INDEX   success\n");
         //===============video_path_index 索引==============
@@ -1007,7 +1145,7 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE video_path_index INDEX  fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE video_path_index INDEX   success\n");
         //===============folder_path_index 索引==============
@@ -1015,11 +1153,11 @@ static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {
             printf("CREATE folder_path_index INDEX  fail %s\n", errMsg);
-            return -1;
+            return NULL;
         }
         printf("CREATE folder_path_index INDEX   success\n");
 
-        return 0;
+        return db;
     }
 
 

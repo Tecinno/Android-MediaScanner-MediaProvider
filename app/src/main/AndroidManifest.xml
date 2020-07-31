@@ -32,6 +32,27 @@
             android:name=".MediaProvider"
             android:authorities="media.scan"
             android:exported="true" />
+
+<!--        <receiver android:name="Menu$MyBroadcastReceiver">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MEDIA_MOUNTED" />-->
+<!--                <data android:scheme="file" />-->
+<!--            </intent-filter>-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />-->
+<!--                <data android:scheme="file" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <receiver android:name="MainActivity$MyBroadcastReceiver">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MEDIA_MOUNTED" />-->
+<!--                <data android:scheme="file" />-->
+<!--            </intent-filter>-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />-->
+<!--                <data android:scheme="file" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
     </application>
 
 </manifest>

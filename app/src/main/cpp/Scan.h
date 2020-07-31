@@ -19,6 +19,10 @@
 #include "sqlite3.h"
 #include <unistd.h>
 #include <list>
+#include <thread>
+#include <pthread.h>
+#include <mutex>
+
 //#include <mediametadataretriever.h>
 //#include <CharacterEncodingDetector.h>
 //#include <media/stagefright/MediaSource.h>
@@ -40,26 +44,30 @@ namespace android {
             folder
         };
         sqlite3 *mdb;
+        bool firstScan;
+        static int aa;
 //        int insertcount;
 //        char pathRoot[1024];
         int rootPathLen;
         std::list<std::string> mediaList;
+        std::list<std::string> mediaListBuf;
 //        char oldVolume[64];
         bool isNewVolume;
     public:
         Scan();
         ~Scan();
         int getId(const char* path);
-        int ProcessDirectory(const char *path, int isNewVolume, bool firstScan);
+        int ProcessDirectory(const char *path, int isNewVolume, bool isfirstScan);
         static int callback(void *data, int args_num, char **columnValue, char **columnName);
-
+        sqlite3* creat_database();
     private:
+        static void* flushToDB(void *ptr);
         bool insertFolder(sqlite3 *db, const char* path, int parentId);
-        bool flush(sqlite3 *db, bool firstScan);
+        bool flush();
         void prescan();
-        int creat_database(sqlite3* &db);
+
         bool open_database(sqlite3* &mdb);
-        bool scanFile(sqlite3 *db,const  char* path, mediaType type, int parentId, const int dirLayer, bool firstScan);
+        bool scanFile(sqlite3 *db,const  char* path, mediaType type, int parentId, const int dirLayer);
         int checkFileNeedUpdate(const char* path, int mtime, mediaType type);
         sqlite3_stmt* queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* index, const char* selectArg);
         bool updateFolderHaveMedia(sqlite3 *db, int id, mediaType type);

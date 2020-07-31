@@ -25,7 +25,7 @@ Java_com_czy_jni_MediaProvider_scan(//Java_com_czy_jni_MediaProvider_stringFromJ
 //    id = env->GetStringUTFChars(isNewVolume, 0);
     android::Scan *scan = new android::Scan();
     scan->ProcessDirectory(path, isNewVolume, true /*first scan*/);
-    scan->ProcessDirectory(path, 0, false);
+//    scan->ProcessDirectory(path, 0, false);
     delete(scan);
     env->ReleaseStringUTFChars(scanPath, path);
 //    env->ReleaseStringUTFChars(isNewVolume, id);

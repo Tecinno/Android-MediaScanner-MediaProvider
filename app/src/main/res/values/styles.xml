@@ -7,5 +7,13 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+    <!--弹窗动画-->
+    <style name="mystyle" parent="android:Animation">
+        <!--//进入时的动画-->
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <!--//退出时的动画-->
+        <item name="android:windowExitAnimation">@anim/dialog_out</item>
+<!--        <item name="android:windowEnterAnimation">@android:style/Animation.Dialog</item>-->
 
+    </style>
 </resources>

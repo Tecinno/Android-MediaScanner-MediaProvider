@@ -7,3 +7,6 @@
 732	850	617307733	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so	67a942096248836
 2	742	617307946	CMakeFiles/native-lib.dir/Scan.cpp.o	8b58d351e12e30d
 742	858	617307946	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so	67a942096248836
+2	513	618598345	CMakeFiles/native-lib.dir/native-lib.cpp.o	2ed1772a67753145
+5	831	618598345	CMakeFiles/native-lib.dir/Scan.cpp.o	8b58d351e12e30d
+831	1067	618598345	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so	67a942096248836

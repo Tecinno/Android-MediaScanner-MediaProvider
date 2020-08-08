@@ -1,0 +1,24 @@
+ninja: Entering directory `F:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\armeabi-v7a'
+[1/3] Building CXX object CMakeFiles/native-lib.dir/native-lib.cpp.o
+[2/3] Building CXX object CMakeFiles/native-lib.dir/Scan.cpp.o
+FAILED: CMakeFiles/native-lib.dir/Scan.cpp.o 
+C:\Users\1\AppData\Local\Android\Sdk\ndk\21.0.6113669\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=armv7-none-linux-androideabi24 --gcc-toolchain=C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -O0 -fno-limit-debug-info  -fPIC -MD -MT CMakeFiles/native-lib.dir/Scan.cpp.o -MF CMakeFiles\native-lib.dir\Scan.cpp.o.d -o CMakeFiles/native-lib.dir/Scan.cpp.o -c F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp
+In file included from F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:7:
+In file included from F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.h:22:
+C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1\thread:273:5: error: attempt to use a deleted function
+    __invoke(_VSTD::move(_VSTD::get<1>(__t)), _VSTD::move(_VSTD::get<_Indices>(__t))...);
+    ^
+C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1\thread:283:5: note: in instantiation of function template specialization 'std::__ndk1::__thread_execute<std::__ndk1::unique_ptr<std::__ndk1::__thread_struct, std::__ndk1::default_delete<std::__ndk1::__thread_struct> >, void (android::Scan::*)()>' requested here
+    __thread_execute(*__p, _Index());
+    ^
+C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1\thread:299:47: note: in instantiation of function template specialization 'std::__ndk1::__thread_proxy<std::__ndk1::tuple<std::__ndk1::unique_ptr<std::__ndk1::__thread_struct, std::__ndk1::default_delete<std::__ndk1::__thread_struct> >, void (android::Scan::*)()> >' requested here
+    int __ec = __libcpp_thread_create(&__t_, &__thread_proxy<_Gp>, __p.get());
+                                              ^
+F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:807:25: note: in instantiation of function template specialization 'std::__ndk1::thread::thread<void (android::Scan::*)(), void>' requested here
+            std::thread t(&Scan::flush);
+                        ^
+C:/Users/1/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1\type_traits:1646:5: note: '~__nat' has been explicitly marked deleted here
+    ~__nat() = delete;
+    ^
+1 error generated.
+ninja: build stopped: subcommand failed.

@@ -176,15 +176,15 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 //=======================start query parent_id=====================
                 //find folder or file parent folder id,save in parent_id
                 //audio ,video or folder will use it
-//                if (firstScan) {
-//                    parent_id = getId(dir_entry_parent.abs_file_name_p);
-//                    if (parent_id == -1) {
-//                        printf("getParentId fail !!!\n");
-//                        parent_id = 0;
-//                    }
-//                }
-//                else
-//                    parent_id = 0;
+                if (firstScan) {
+                    parent_id = getId(dir_entry_parent.abs_file_name_p);
+                    if (parent_id == -1) {
+                        printf("getParentId fail !!!\n");
+                        parent_id = 0;
+                    }
+                }
+                else
+                    parent_id = 0;
 
                 //=======================end query parent_id=====================
 //                printf("DT_DIR fileNameStore %s",fileNameStore);
@@ -287,16 +287,11 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             q1.pop();
             closedir(dir_p);
         }
-        // sqlite3_close(db);
         if (mdb != NULL) {
             printf("flushall");
             flush();
-//            printf("flushall wait lock");
             pthread_mutex_lock(&db_lock);
-//            printf("flushall get lock");
-//            sqlite3_wal_checkpoint(mdb, 0);
             sqlite3_close(mdb);
-//            printf("flushall release lock");
             pthread_mutex_unlock(&db_lock);
         }else
             printf("mdb is NULL when close db");
@@ -620,63 +615,57 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
     bool Scan:: flush() {
         printf("flush  !!!\n");
-
+        bool flushInNewThread = false;
         char* errMsg;
-//        if (firstScan){
-//            if (sqlite3_exec(mdb,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
-//                printf("begin fail %s !!!\n", errMsg);
-//                return false;
-//            } else
-//                printf("begin   !!!\n");
-//        }
 
-
-
-        pthread_mutex_lock(&db_lock);
-        if (firstScan) {
-            mediaListBuf.clear();
-            std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
-            mediaList.clear();
-            printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
-            pthread_t tid;
-            pthread_create(&tid, NULL, flushToDB, (void *)this);
-            pthread_detach(tid);
-        }else {
+        if (!flushInNewThread) {
+            if (firstScan){
+                if (sqlite3_exec(mdb,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+                    printf("begin fail %s !!!\n", errMsg);
+                    return false;
+                } else
+                    printf("begin   !!!\n");
+            }
             std::list<std::string>::iterator ctr;
             for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
                 std::string sql = *ctr;
                 int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
                 if (rs != SQLITE_OK) {
-                    printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+                    printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
                 }
             }
             mediaList.clear();
-            pthread_mutex_unlock(&db_lock);
+            if (firstScan) {
+                if (sqlite3_exec(mdb,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
+                    printf("commit fail %s !!!\n", errMsg);
+                    return false;
+                } else
+                    printf("commit   !!!\n");
+            }
+            printf("flush  end !!!\n");
+        } else {
+            pthread_mutex_lock(&db_lock);
+            if (firstScan) {
+                mediaListBuf.clear();
+                std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
+                mediaList.clear();
+                printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
+                pthread_t tid;
+                pthread_create(&tid, NULL, flushToDB, (void *)this);
+                pthread_detach(tid);
+            }else {
+                std::list<std::string>::iterator ctr;
+                for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
+                    std::string sql = *ctr;
+                    int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
+                    if (rs != SQLITE_OK) {
+                        printf("%s fail %s !!!\n", sql.c_str(), errMsg);
+                    }
+                }
+                mediaList.clear();
+                pthread_mutex_unlock(&db_lock);
+            }
         }
-
-
-
-
-
-//        std::list<std::string>::iterator ctr;
-//        for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
-//            std::string sql = *ctr;
-//            int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
-//            if (rs != SQLITE_OK) {
-//                printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
-//            }
-//        }
-//        mediaList.clear();
-//        if (firstScan) {
-//            if (sqlite3_exec(mdb,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
-//                printf("commit fail %s !!!\n", errMsg);
-//                return false;
-//            } else
-//                printf("commit   !!!\n");
-//        }
-//        printf("flush  end !!!\n");
-
-
         return true;
     }
     /*
@@ -779,20 +768,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     value.append(")");
                     sql.append(value);
                 }
-//                else {
-////                    updateFolderHaveMedia(db, parentId, audio);
-//                    sql = "insert into audio(_path, _name, size, mtime) ";
-//                    value = "values ('";
-//                    value.append(path);
-//                    value.append("','");
-//                    value.append(name);
-//                    value.append("',");
-//                    value.append(size);
-//                    value.append(",");
-//                    value.append(mtime);
-//                    value.append(")");
-//                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
-//                }
             } else if (checkFileResult == MEDIA_NEED_UPDATE && !firstScan) {
                 sql = "update audio set ";
                 value = "_path = '";
@@ -821,22 +796,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     value.append(")");
                     sql.append(value);
                 }
-//                else {
-////                    updateFolderHaveMedia(db, parentId, video);
-//                    sql = "insert into video(_path, _name, parent_id, size, mtime) ";
-//                    value = "values ('";
-//                    value.append(path);
-//                    value.append("','");
-//                    value.append(name);
-//                    value.append("',");
-//                    value.append(parent_id);
-//                    value.append(",");
-//                    value.append(size);
-//                    value.append(",");
-//                    value.append(mtime);
-//                    value.append(")");
-//                    sql.append(value);//"insert into audio(_path, _data) values ('fileNameStore', 'fileNameStore')"
-//                }
             } else if (checkFileResult == MEDIA_NEED_UPDATE && !firstScan) {
                 sql = "update video set ";
                 value = "_path = '";
@@ -855,43 +814,19 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 return true;
             }
         }
-//        else if (type == folder) {
-//            if (checkFileResult == MEDIA_NEED_INSERT && firstScan) {
-//                value = "values ('";
-//                value.append(path);
-//                value.append("','");
-//                value.append(name);
-//                value.append("',");
-//                value.append(layer);
-//                value.append(",");
-//                value.append(parent_id);
-//                value.append(")");
-//                sql = "insert into folder_dir(_path, _name, dir_layer, parent_id) ";
-//                sql.append(value);
-//            } else {
-//                return true;
-//            }
-//        }
-
         mediaList.push_back(sql);
 //        printf("push_back : %s ,size %d\n", sql.c_str(), mediaList.size());
         if (mediaList.size() >= 300) {
-//            printf("scanfile wait db_lock  !!!\n");
-//            pthread_mutex_lock(&db_lock);
-//            printf("scanfile get db_lock  !!!\n");
-//            mediaListBuf.clear();
-//            std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
-//            mediaList.clear();
-//            printf("mediaListBuf size %d  !!!\n", mediaListBuf.size());
-//            pthread_t tid;
-//            pthread_create(&tid, NULL, flushToDB, (void *)this);
-//            pthread_detach(tid);
-
             return flush();
-//            return  true;
         }
         return true;
     }
+
+    /*
+     * The method flush data to database
+     *
+     * @param p : this，obj
+     */
     void*  Scan::flushToDB(void *p) {
         printf("flushToDB");
         Scan* ptr = (Scan*)p;
@@ -916,8 +851,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             } else
                 printf("flushToDB begin  transaction!!!\n");
         }
-
-
         std::list<std::string>::iterator ctr;
 
         for (ctr = list.begin(); ctr != list.end(); ++ctr) {
@@ -927,8 +860,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             if (rs != SQLITE_OK) {
                 printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
             }
-//            else
-//                printf("flushToDB %s  success !\n", sql.c_str());
         }
 
         if(mfirstScan) {
@@ -1010,8 +941,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             printf("open db error  !!!\n");
             return NULL;
         }
-//        if(!firstScan)
-//            return db;
         rs = sqlite3_exec(db, "PRAGMA journal_mode=WAL", 0, 0, &errMsg);;
         if (rs != SQLITE_OK) {
             printf("PRAGMA journal_mode=WAL fail %s\n", errMsg);

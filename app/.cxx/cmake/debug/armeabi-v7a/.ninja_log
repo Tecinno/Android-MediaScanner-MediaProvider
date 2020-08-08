@@ -1,0 +1,8 @@
+# ninja log v5
+1	556	617352915	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf
+17	4039	617352919	CMakeFiles/native-lib.dir/sqlite3.c.o	c8066dfc5abff16f
+2	399	617354486	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf
+1	424	617354835	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf
+2	402	617355284	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf
+2	439	617355948	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf
+2	431	617356912	CMakeFiles/native-lib.dir/native-lib.cpp.o	29d2fc6cc36b5bf

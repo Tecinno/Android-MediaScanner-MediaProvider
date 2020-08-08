@@ -1,0 +1,11 @@
+ninja: Entering directory `F:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\arm64-v8a'
+[1/2] Building CXX object CMakeFiles/native-lib.dir/Scan.cpp.o
+F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:652:61: warning: format specifies type 'int' but the argument has type 'std::__ndk1::list<std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> >, std::__ndk1::allocator<std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > > >::size_type' (aka 'unsigned long') [-Wformat]
+                printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
+                                                ~~          ^~~~~~~~~~~~~~~~~~~
+                                                %lu
+F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:14:65: note: expanded from macro 'printf'
+#define printf(...) __android_log_print(ANDORID_LOG_ERROR, TAG, __VA_ARGS__)
+                                                                ^~~~~~~~~~~
+1 warning generated.
+[2/2] Linking CXX shared library F:\software\android_studio\MediaProvider\MediaScanner\app\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so

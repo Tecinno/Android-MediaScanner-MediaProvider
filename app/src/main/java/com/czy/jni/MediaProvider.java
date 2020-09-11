@@ -78,7 +78,7 @@ public class MediaProvider extends ContentProvider {
                 "_path TEXT NOT NULL," +
                 "album TEXT," +
                 "genre TEXT," +
-                "artist TEXT" +
+                "artist TEXT," +
                 "genre_id INTEGER," +
                 "album_id INTEGER," +
                 "artist_id INTEGER" +
@@ -162,10 +162,6 @@ public class MediaProvider extends ContentProvider {
         Context context = getContext();
         DatabaseHelper dbHelper = new DatabaseHelper(context);
 
-        /**
-         * 如果不存在，则创建一个可写的数据库。
-         */
-
         db = dbHelper.getWritableDatabase();//创建数据库
 //        db.enableWriteAheadLogging();
 //        db.setLocale(Locale.CHINESE);
@@ -176,9 +172,6 @@ public class MediaProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         Trace.beginSection("insert");
-        /**
-         * 添加新学生记录
-         */
         String mediaTable;
         switch (uriMatcher.match(uri)) {
             case AUDIO:mediaTable = AUDIO_TABLE_NAME;break;
@@ -199,6 +192,7 @@ public class MediaProvider extends ContentProvider {
             if (path != null) {
                 final StorageVolume volumeInfo = storageManager.getStorageVolume(path);
                 String volumeId = volumeInfo.getUuid() == null ? "001" : volumeInfo.getUuid();
+                //判断是不是上次插入的设备
                 if(oldVolume.equals(volumeId)) {
                     Log.e(TAG,"old volume : "+ volumeId);
                 } else{
@@ -210,11 +204,9 @@ public class MediaProvider extends ContentProvider {
                         isNewVolume = 1;
                         Log.e(TAG,"delete old db and creat new db sucess ");
                     }
-
                     Log.e(TAG,"new volume : "+ volumeId);
                 }
-
-
+                //开始扫描
                 mediascanner(isNewVolume);
             } else
                 Log.e(TAG,"path is null : "+ path);
@@ -226,9 +218,6 @@ public class MediaProvider extends ContentProvider {
 
         long rowID = db.insert(mediaTable, "", values);
         Log.e(TAG,"insert success rowID :" + rowID);
-        /**
-         * 如果记录添加成功
-         */
 
         if (rowID > 0)
         {
@@ -251,11 +240,6 @@ public class MediaProvider extends ContentProvider {
         }
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         qb.setTables(mediaTable);
-
-//        if (sortOrder == null || sortOrder == ""){
-//            sortOrder = NAME + " COLLATE LOCALIZED ASC";
-//
-//        }
 
         Cursor c = qb.query(db, projection, selection, selectionArgs,null, null, sortOrder);
         if (c == null)
@@ -316,5 +300,5 @@ public class MediaProvider extends ContentProvider {
         Trace.endSection();
     }
 
-    public native int[] scan(String scanPath, int isNewVolume);
+    public native int scan(String scanPath, int isNewVolume);
 }

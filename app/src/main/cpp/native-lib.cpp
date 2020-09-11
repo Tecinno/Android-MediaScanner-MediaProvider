@@ -17,10 +17,10 @@
 //    return NULL;
 //}
 
-extern "C" JNIEXPORT jstring JNICALL
+extern "C" JNIEXPORT jint JNICALL
 Java_com_czy_jni_MediaProvider_scan(//Java_com_czy_jni_MediaProvider_stringFromJNI    Java_com_czy_jni_MainActivity_stringFromJNI
         JNIEnv *env, jobject thiz, jstring scanPath,jint isNewVolume) {//Java_com_czy_jni_MediaProvider_stringFromJNI
-    const char *path =NULL;
+    const char *path = NULL;
     path = env->GetStringUTFChars(scanPath, 0);
 //    id = env->GetStringUTFChars(isNewVolume, 0);
     android::Scan *scan = new android::Scan();
@@ -28,6 +28,5 @@ Java_com_czy_jni_MediaProvider_scan(//Java_com_czy_jni_MediaProvider_stringFromJ
 //    scan->ProcessDirectory(path, 0, false);
     delete(scan);
     env->ReleaseStringUTFChars(scanPath, path);
-//    env->ReleaseStringUTFChars(isNewVolume, id);
-    return NULL;
+    return 0;
 }

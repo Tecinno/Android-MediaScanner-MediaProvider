@@ -1,0 +1,7 @@
+# ninja log v5
+12	691	621550218	CMakeFiles/native-lib.dir/native-lib.cpp.o	c9eebe1c747efad9
+10	1106	621550218	CMakeFiles/native-lib.dir/Scan.cpp.o	bb92be11f8ab7a0c
+0	2527	621550220	CMakeFiles/native-lib.dir/sqlite3.c.o	c460bd05c58b0b79
+2527	2773	621550220	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86_64/libnative-lib.so	ea8a0a837472ca5d
+2	711	621550298	CMakeFiles/native-lib.dir/Scan.cpp.o	bb92be11f8ab7a0c
+711	838	621550298	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86_64/libnative-lib.so	ea8a0a837472ca5d

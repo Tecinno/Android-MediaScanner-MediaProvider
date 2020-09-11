@@ -25,7 +25,6 @@ static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
 static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
 static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
-//static sqlite3 *mdb = Scan::creat_database();
 
     Scan::Scan(){
     };
@@ -39,14 +38,25 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
         return 0;
     }
-
-
-
+    /*
+     * 扫描函数
+     * 输入：path：要扫描的路径
+     *      isNewVol：
+     *          1：扫描的路径是第一次扫描
+     *          0：上次扫描过的
+     *      isfirstScan：
+     *          true：扫描并构建快表
+     *          false：扫描并构建正常的数据表
+     * 输出：
+     *      扫描是否成功
+     *          0：错误
+     *          1：OK
+     *          2:跳过
+     */
     int Scan::ProcessDirectory(const char *path, int isNewVol, bool isfirstScan) {
-
         printf("ProcessDirectory %d", isNewVol);
+        //firstScan是true就是构建快表
         firstScan = isfirstScan;
-//        return 0;
         clock_t  start = clock();
         struct stat statbuf;
         std::queue<sDirEntry> q1;
@@ -66,22 +76,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             printf("ProcessDirectory isNewVolume true \n");
         else
             printf("ProcessDirectory isNewVolume false \n");
-//        if(strcmp(oldVolume, volumeId)) {
-//            printf("is new Volume , oldVolume  %s, new volumeId %s\n", oldVolume, volumeId);//7A91-A7C5
-//            memset(oldVolume, 0, sizeof(oldVolume));
-//            memcpy(oldVolume, volumeId, strlen(volumeId));
-//            isNewVolume = true;
-////            if(remove(DBPATH1)==0) {
-////                printf("is a new volume remove success \n");
-////                isNewVolume = true;
-////            } else
-////                printf("is a new volume remove failed \n");
-//
-//            printf("is new Volume , oldVolume  %s, new volumeId %s\n", oldVolume, volumeId);
-//        } else
-//            printf("old Volume oldVolume  %s, new volumeId %s\n", oldVolume, volumeId);
-//        oldVolume = volumeId;
-
         //================open database===============
         mdb = creat_database();
         if (mdb == NULL) {
@@ -89,18 +83,15 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             return -1;
         }
 
-
-        //================open database===============
-
-
-
         q1.push(root);
-        if(firstScan)
+        //不是新USB就要预扫描
+        if(firstScan && !isNewVolume)
             prescan();
         while(!q1.empty()) {
             sDirEntry dir_entry_parent = q1.front();
             //dirLayer control
             dirLayer = dir_entry_parent.depth;
+            //最多不超过100层
             if (dirLayer >= 100) {
                 printf("MediaScanner::doProcessDirectoryEntry  dirLayer is %d >= 100 \n",dir_entry_parent.depth);
                 flush();
@@ -123,11 +114,9 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             int filecount = 0;
             while((dir_entity_p = readdir(dir_p)) != NULL)
             {
-
                 if (dir_entity_p->d_name[0] == '.' &&
                     (dir_entity_p->d_name[1] == 0 || (dir_entity_p->d_name[1] == '.' && dir_entity_p->d_name[2] == 0)
                      || strncmp(dir_entity_p->d_name,".nomedia",8))) {
-//                    printf("doProcessDirectory SKIPPED: %s \n",dir_entity_p->d_name);
                     continue;
                 }
 
@@ -148,14 +137,13 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                            audioCount, videoCount, dirLayer, dirCount);
                     return MEDIA_SCAN_RESULT_SKIPPED;
                 }
+                //文件名太长
                 if ((sizeof(dir_entry_parent.abs_file_name_p) + sizeof(dir_entity_p->d_name) + 1 ) >= 4096) {
                     printf("path is too long : %s%s !!! \n",dir_entry_parent.abs_file_name_p,dir_entity_p->d_name);
                     continue;
                 }
-                // memset(fileNameStore, 0x00, sizeof(fileNameStore)/sizeof(fileNameStore[0]));
                 memset(fileNameStore, 0, sizeof(fileNameStore));
                 sprintf(fileNameStore, "%s/%s", dir_entry_parent.abs_file_name_p, dir_entity_p->d_name);
-                // memcpy
                 int type = dir_entity_p->d_type;
                 if (type == DT_UNKNOWN)
                 {
@@ -185,9 +173,8 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 }
                 else
                     parent_id = 0;
-
                 //=======================end query parent_id=====================
-//                printf("DT_DIR fileNameStore %s",fileNameStore);
+
                 if (type == DT_REG)
                 {
                     bool findMediaFile = false;
@@ -216,8 +203,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                             }
                         }
                     }
-//                    else
-//                        printf("audio is more than 9999 !!!\n");
                     if (videoCount < 9999 && !findMediaFile) {
                         for (int i = 0; i < videoSize; i++) {
                             if (!strcasecmp(nameSuffix, videoType[i])) {
@@ -254,16 +239,8 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     } else {
                         ++dirCount;
                     }
-
-                    bool childNoMedia = noMedia;
-                    // set noMedia flag on directories with a name that starts with '.'
-                    // for example, the Mac ".Trashes" directory
-                    if (dir_entity_p->d_name[0] == '.')
-                        childNoMedia = true;
-                    // nomedia flag is used to make a ".nomedia" file to stop android to stopping scanning medie files in this dir
-                    // if (stat(fileNameStore, &statbuf) == 0)
-                    // {
-                    if (!firstScan) {
+                    //文件夹不在这里插入数据库了，在getId里面做
+//                    if (!firstScan) {
 //                        if (mdb == NULL)
 //                            open_database(mdb);
 //                            if (mdb == NULL) {
@@ -272,9 +249,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 //                            }
 //                        printf("DT_DIR fileNameStore %s",fileNameStore);
 //                        scanFile(mdb, fileNameStore, folder, parent_id, dirLayer, firstScan);
-                    }
-
-                    //push folder dir to queue
+//                    }
                     sDirEntry s_dir(dir_entry_parent.depth + 1, fileNameStore);
                     q1.push(s_dir);
                 }
@@ -288,6 +263,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             closedir(dir_p);
         }
         if (mdb != NULL) {
+            //将剩余数据插入数据库
             printf("flushall");
             flush();
             pthread_mutex_lock(&db_lock);
@@ -312,7 +288,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
     }
 
     /*
-    delete the older data
+     * 预扫描，删除数据库有但是存储设备中已经不存在的数据
     */
     void Scan::prescan(){
         printf("prescan \\n");
@@ -378,12 +354,10 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             }
             sqlite3_finalize(stmt);
         }
-
-
     }
-/*
-    get folder Id in folder_dir
-*/
+    /*
+     * 获取指定路径的id，
+    */
     int Scan::getId(const char* path) {
 
         open_database(mdb);
@@ -395,13 +369,11 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
         const char* zTail;
         const char *dirSuffix = strrchr(path, '/') + 1;//获取文件夹的名称
         if (strlen(path) == rootPathLen){ // 判断是不是根文件夹
-//            printf("getId is root : %s \n",path );
             return 0;
         }
         static char pathBuf[256];
         static int pathBufId = 0;
         if (!strcmp(dirSuffix, pathBuf)) {//判断是不是上次查询过的文件夹
-//            printf("getId same path %s id %d\n",pathBuf, pathBufId);
             return pathBufId;
         }
         memset(pathBuf, 0, sizeof(pathBuf));
@@ -409,42 +381,34 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
         //获取锁
-//        printf("getId wait db_lock\n");
         pthread_mutex_lock(&db_lock);
-//        printf("getId get db_lock\n");
         std::string sql = "select _id from folder_dir indexed by folder_path_index where _path = '";//查询文件夹的id
         sql.append(path);
         sql.append("'");
-//        printf("getId begin %s\n",sql.c_str());
         if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 int parent_id = sqlite3_column_int(stmt, 0);
                 sqlite3_finalize(stmt);
                 pathBufId = parent_id;
                 //释放锁
-//                printf("getId release db_lock\n");
                 pthread_mutex_unlock(&db_lock);
                 return parent_id;
-            } else {
+            } else {//如果没有查询到该路径，那么就要插入该文件夹路径，但是插入前得获取该文件夹的父文件夹的id。
                 //释放锁
-//                printf("getId release db_lock\n");
                 pthread_mutex_unlock(&db_lock);
-//                printf("getId %s no find \n",dirSuffix);
                 int len = strlen(path) - strlen(dirSuffix) - 1;
                 char parentPath[len + 1];
                 memset(parentPath, 0, sizeof(parentPath));
                 memcpy(parentPath, path, len);//获取父文件夹路径
+                //获取该父文件夹的id，开始递归插入文件夹信息到数据库
                 int parentid = getId(parentPath);
                 if (parentid != -1)
-                    insertFolder(mdb, path, parentid); //如果没有找到对应folder，就插入
+                    insertFolder(mdb, path, parentid); //插入该文件夹到数据库
                 sqlite3_finalize(stmt);
                 //获取锁
-//                printf("getId wait db_lock\n");
                 pthread_mutex_lock(&db_lock);
-//                printf("getId get db_lock\n");
-                sql = "select _id from folder_dir order by _id desc LIMIT 1";//获取刚刚插入的id
+                sql = "select _id from folder_dir order by _id desc LIMIT 1";//获取刚刚插入的文件夹的id
                 int step_result;
-//                printf("getId begin %s\n",sql.c_str());
                 if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
                     step_result = sqlite3_step(stmt);
                         if (step_result == SQLITE_ROW) {
@@ -452,48 +416,45 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                             sqlite3_finalize(stmt);
                             pathBufId = id;
                             //释放锁
-//                            printf("getId release db_lock\n");
                             pthread_mutex_unlock(&db_lock);
                             return id;
                         }
                 }
                 pathBufId = 0;
                 //释放锁
-//                printf("getId release db_lock\n");
                 pthread_mutex_unlock(&db_lock);
                 return 0;
             }
         } else {
-
             printf("sqlite3_prepare_v2 fail\n");
             sqlite3_finalize(stmt);
             //释放锁
-//            printf("getId release db_lock\n");
             pthread_mutex_unlock(&db_lock);
             return -1;
 
         }
     }
 
-
+    /*
+     * 查询数据，返回查询到的数据
+     * 输入：
+     *      table：查询的表
+     *      projection：查询的字段
+     *      projectionSize：字段个数
+     *      selection：where指定的字段
+     *      index：加入索引
+     *      selectArg：where匹配的值
+     * 输出：
+     *      保存projection需要获取的信息
+     */
     sqlite3_stmt* Scan::queryData(const char* table, const char* projection[], int projectionSize, const char* selection, const char* index, const char* selectArg) {
-//        sqlite3 *db = open_database();
-//        if (mdb == NULL){
-//            printf("mdb == NULL\n");
-//            int rc = sqlite3_open_v2(DBPATH1, &mdb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-//            if (rc != SQLITE_OK) {
-//                return NULL;
-//            }
-//        }
         open_database(mdb);
         if (mdb == NULL )
             return NULL;
         sqlite3_stmt* stmt = NULL;
         const char* zTail;
-        // sql = "select projection[] from table where selection = selectArg";
         std::string sql = "select ";
         sql.append(projection[0]);
-//        int projectionSize = sizeof(projection)/sizeof(projection[0]);
         for (int i = 1; i < projectionSize; ++i) {
             sql.append(",");
             sql.append(projection[i]);
@@ -511,8 +472,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             sql.append(selectArg);
             sql.append("'");
         }
-
-//        printf(" projectionSize: %d , %s \n", projectionSize, sql.c_str());
         if (sqlite3_prepare_v2(mdb, sql.c_str(), -1, &stmt, &zTail) == SQLITE_OK) {
             return stmt;
         } else {
@@ -521,7 +480,17 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             return NULL;
         }
     }
-
+    /*
+     * 检查数据是否在数据库中存在，如果存在是否是最新数据，要不要更新
+     * 输入：
+     *      path：指定的文件
+     *      mtime：文件的最近更新时间
+     *      type：文件的类型
+     * 输出：
+     *      MEDIA_NEED_UPDATE：需要更新
+     *      MEDIA_NEED_INSERT：需要插入
+     *      MEDIA_NO_UPDATE：不需要操作
+     */
     int Scan::checkFileNeedUpdate(const char* path, int mtime, mediaType type) {
 //        printf("checkFileNeedUpdate path %s \n", path);
         if(isNewVolume)
@@ -529,26 +498,16 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
         switch (type){
             case audio:{
                 const char* projection[2] = {"_id", "mtime"};
-//                printf("start queryData\n");
                 const char* index = "indexed by audio_path_index";
                 sqlite3_stmt* stmt = queryData("audio", projection, 2, "_path", index, path);
-//                printf("end queryData\n" );
                 if (stmt == NULL) {
-//                    printf("checkFileNeedUpdate stmt == NULL\n");
-//                    sqlite3_finalize(stmt);
                     return MEDIA_NEED_UPDATE;
                 }
-//                printf("start sqlite3_step\n" );
                 if (sqlite3_step(stmt) == SQLITE_ROW) {
-//                    printf("start sqlite3_column_int 0 \n" );
                     int id = sqlite3_column_int(stmt, 0);
-//                    printf("checkFileNeedUpdate SQLITE_ROW :%s  id %d \n", path, id);
                     if (id > 0) {
-//                        printf("start sqlite3_column_int 1 \n" );
                         int oldMtime = sqlite3_column_int(stmt, 1);
                         if (oldMtime == mtime) {
-                            // printf("checkFileNeedUpdate file no change :%s\n", path);
-//                            printf("start sqlite3_finalize\n" );
                             sqlite3_finalize(stmt);
                             return MEDIA_NO_UPDATE;
                         } else {
@@ -574,7 +533,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     if (id > 0) {
                         int oldMtime = sqlite3_column_int(stmt, 1);
                         if (oldMtime == mtime) {
-                            // printf("checkFileNeedUpdate file no change :%s\n", path);
                             sqlite3_finalize(stmt);
                             return MEDIA_NO_UPDATE;
                         } else {
@@ -588,7 +546,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 break;
             case folder:{
                 const char* projection[1] = {"_id"};
-//                const char* index = "indexed by audio_path_index";
                 sqlite3_stmt* stmt = queryData("folder_dir", projection, 1, "_path", NULL, path);
                 if (stmt == NULL) {
                     printf("checkFileNeedUpdate stmt == NULL\n");
@@ -609,13 +566,15 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 break;
             default:printf("checkFileNeedUpdate table no find\n");return false;
         }
-//        printf("MEDIA_NEED_INSERT :%s\n", path);
         return MEDIA_NEED_INSERT;
     }
-
+    /*
+     * 将数据插入到数据库
+     * 输出：插入成功与否
+     */
     bool Scan:: flush() {
         printf("flush  !!!\n");
-        bool flushInNewThread = false;
+        bool flushInNewThread = true;
         char* errMsg;
 
         if (!flushInNewThread) {
@@ -643,27 +602,21 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     printf("commit   !!!\n");
             }
             printf("flush  end !!!\n");
-        } else {
+        } else {//开线程写数据库
             pthread_mutex_lock(&db_lock);
             if (firstScan) {
+                //交换链表，一个做缓存，一个来插入数据库
+                std::list<std::string> temp;
                 mediaListBuf.clear();
-                std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
-                mediaList.clear();
-                printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
+                temp = mediaList;
+                mediaList = mediaListBuf;
+                mediaListBuf = temp;
+//                std::copy(mediaList.begin(),mediaList.end(),std::back_inserter(mediaListBuf));
+//                mediaList.clear();
+//                printf("flush mediaListBuf size %d  !!!\n", mediaListBuf.size());
                 pthread_t tid;
                 pthread_create(&tid, NULL, flushToDB, (void *)this);
                 pthread_detach(tid);
-            }else {
-                std::list<std::string>::iterator ctr;
-                for (ctr = mediaList.begin(); ctr != mediaList.end(); ++ctr) {
-                    std::string sql = *ctr;
-                    int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
-                    if (rs != SQLITE_OK) {
-                        printf("%s fail %s !!!\n", sql.c_str(), errMsg);
-                    }
-                }
-                mediaList.clear();
-                pthread_mutex_unlock(&db_lock);
             }
         }
         return true;
@@ -705,9 +658,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             return true;
         }
     }
-//    void* threadtest1(void *ptr) {
-//        printf("threadtest");
-//    }
     /*
      * The method insert or update audio/video/folder data to database
      *
@@ -815,8 +765,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             }
         }
         mediaList.push_back(sql);
-//        printf("push_back : %s ,size %d\n", sql.c_str(), mediaList.size());
-        if (mediaList.size() >= 300) {
+        if (mediaList.size() >= 100) {
             return flush();
         }
         return true;
@@ -835,18 +784,14 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
         bool mfirstScan = ptr->firstScan;
         if (mdb == NULL) {
             printf("flushToDB mdb IS NULL \n");
-//            printf("flushToDB release lock");
             pthread_mutex_unlock(&db_lock);
             return NULL;
         }
-//        std::list<std::string>* ptr = (std::list<std::string>*) p;
-//        ptr->size();
-//        printf("flushToDB size %d \n", list.size());
-//        sqlite3* db;
         char * errMsg;
         if(mfirstScan) {
-            if (sqlite3_exec(mdb,"begin transaction;",0,0,&errMsg) != SQLITE_OK) {
+            if (sqlite3_exec(mdb,"begin transaction;",0, 0, &errMsg) != SQLITE_OK) {
                 printf("flushToDB begin fail %s !!!\n", errMsg);
+                pthread_mutex_unlock(&db_lock);
                 return NULL;
             } else
                 printf("flushToDB begin  transaction!!!\n");
@@ -855,7 +800,6 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
         for (ctr = list.begin(); ctr != list.end(); ++ctr) {
             std::string sql = *ctr;
-//            printf("flushToDB sql %s \n", sql.c_str());
             int rs = sqlite3_exec(mdb, sql.c_str(), 0, 0, &errMsg);
             if (rs != SQLITE_OK) {
                 printf("flushToDB %s fail %s !!!\n", sql.c_str(), errMsg);
@@ -865,13 +809,13 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
         if(mfirstScan) {
             if (sqlite3_exec(mdb,"commit transaction;",0,0,&errMsg) != SQLITE_OK) {
                 printf("flushToDB commit fail %s !!!\n", errMsg);
+                pthread_mutex_unlock(&db_lock);
                 return NULL;
             } else
                 printf("flushToDB commit  transaction !!!\n");
         }
 
         list.clear();
-//        printf("flushToDB release lock");
         pthread_mutex_unlock(&db_lock);
         return NULL;
     }
@@ -921,13 +865,11 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
     bool Scan::open_database(sqlite3* &mdb) {
         if (mdb == NULL) {
-//            int rc = sqlite3_open("/data/data/com.czy.jni/cache/external_udisk1.db", &mdb);SQLITE_OPEN_NOMUTEX， SQLITE_OPEN_SHAREDCACHE///data/data/com.czy.jni/databases/external_udisk.db
             int rc = sqlite3_open_v2(DBPATH1, &mdb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
             if (rc != SQLITE_OK) {
                 printf("open sqlite3 fail\n");
                 return false;
             }
-//            sqlite3_exec(mdb,"PRAGMA synchronous = OFF; ",0,0,0);
         }
         return true;
     }
@@ -1088,9 +1030,5 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 
         return db;
     }
-
-
-
-
 };
 

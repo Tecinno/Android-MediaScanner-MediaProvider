@@ -63,39 +63,17 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         findViews();
-//        Intent intent = getIntent();
-//        int event = intent.getIntExtra("event", 0);
-//        if (event == 1) {
-//            Log.e(TAG, "event == 1");
-//            showDiaglog();
-//        }
-
         audioData = new CurrentAudioData();
         videoData = new CurrentVideoData();
         //注册广播
-        intentRegister();
+//        intentRegister();
+        //获取文件读写权限
         getPermission();
-        Window window = getWindow();
-        try {
-//            WindowManager.LayoutParams params = window.getAttributes();
-//            Class<WindowManager.LayoutParams> aClass = WindowManager.LayoutParams.class;
-//            Field field = aClass.getDeclaredField("PRIVATE_FLAG_NO_MOVE_ANIMATION");
-//            field.setAccessible(true);
-//            int flag = (int) field.get(params);
-//            params.flags = flag;
-////            window.setAttributes(params);
-//            window.setFlags(flag, flag);
-        }catch (Exception e) {
-
-        }
-
     }
     //注册广播
     private void intentRegister() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("android.net.conn.media");
-//        intentFilter.addAction("android.intent.action.MEDIA_MOUNTED");
-//        intentFilter.addDataScheme("file");
         broad = new MyBroadcastReceiver();
         registerReceiver(broad, intentFilter);
     }

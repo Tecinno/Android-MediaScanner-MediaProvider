@@ -18,14 +18,14 @@ namespace android{
 #define MEDIA_SCAN_RESULT_ERROR 0
 #define DBPATH  "/thirdparty/0/udiskMediaData/com.czy.jni/database/external_udisk.db"
 #define DBPATH1 "/data/data/com.czy.jni/databases/external_udisk.db"
-#define ONCE_INSERT_COUNT 200
+#define ONCE_INSERT_COUNT 100
 
 static const char *videoType[] = {".mp4", ".3Gp", ".m4v", ".avi"};
 static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
 static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
 static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
-
+static bool NEED_RESTRICT_FILE_COUNT = false;
     Scan::Scan(){
     };
     Scan::~Scan(){
@@ -92,7 +92,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             //dirLayer control
             dirLayer = dir_entry_parent.depth;
             //最多不超过100层
-            if (dirLayer >= 100) {
+            if (NEED_RESTRICT_FILE_COUNT && dirLayer >= 100) {
                 printf("MediaScanner::doProcessDirectoryEntry  dirLayer is %d >= 100 \n",dir_entry_parent.depth);
                 flush();
                 pthread_mutex_lock(&db_lock);
@@ -121,13 +121,13 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 }
 
                 //each dir files count more than 9999 should SKIPPED
-                if (filecount >= 9999) {
+                if (NEED_RESTRICT_FILE_COUNT && filecount >= 9999) {
                     printf(" doProcessDirectory filecount per dir is %d >= 9999 \n", filecount);
                     break;
                 } else {
                     ++filecount;
                 }
-                if (audioCount >= 9999 && videoCount >= 9999) {
+                if (NEED_RESTRICT_FILE_COUNT && audioCount >= 9999 && videoCount >= 9999) {
                     printf(" doProcessDirectory audioCount >= 9999 && videoCount > 9999 \n");
                     flush();
                     pthread_mutex_lock(&db_lock);
@@ -182,7 +182,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                     if (!nameSuffix)
                         continue;
                     // printf("scan audio name is : %s   audioCount is : %d \n", dir_entity_p->d_name, audioCount + 1);
-                    if (audioCount < 9999) {
+                    if (!NEED_RESTRICT_FILE_COUNT || audioCount < 9999) {
                         for (int i = 0; i < audioSize; i++) {
                             if (!strcasecmp(nameSuffix, audioType[i])) {
                                 // printf("scan audio name is : %s   audioCount is : %d \n", dir_entity_p->d_name, audioCount + 1);
@@ -203,7 +203,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                             }
                         }
                     }
-                    if (videoCount < 9999 && !findMediaFile) {
+                    if (!NEED_RESTRICT_FILE_COUNT || videoCount < 9999 && !findMediaFile) {
                         for (int i = 0; i < videoSize; i++) {
                             if (!strcasecmp(nameSuffix, videoType[i])) {
                                 // printf("scan video name is : %s   videoCount is : %d \n", dir_entity_p->d_name, videoCount + 1);
@@ -226,7 +226,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
                 } else if (type == DT_DIR) {
 //                    printf("DT_DIR fileNameStore %s",fileNameStore);
                     // all dir count could not more than 9999
-                    if (dirCount > 9999) {
+                    if (NEED_RESTRICT_FILE_COUNT && dirCount > 9999) {
                         printf("MediaScanner::doProcessDirectoryEntry  dirCount is %d >= 9999 \n",dirCount);
                         printf("flushall");
                         flush();
@@ -765,7 +765,7 @@ static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
             }
         }
         mediaList.push_back(sql);
-        if (mediaList.size() >= 100) {
+        if (mediaList.size() >= ONCE_INSERT_COUNT) {
             return flush();
         }
         return true;

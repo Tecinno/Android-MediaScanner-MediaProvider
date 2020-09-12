@@ -223,9 +223,12 @@ public class FolderList extends AppCompatActivity {
                         intent.setClass(mContext, MainActivity.class);
                         intent.putExtra("path",data.getPath());
                         intent.putExtra("id",data.getId());
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS | Intent.FLAG_RECEIVER_FOREGROUND);
-
-                       startActivity(intent);
+                        startActivity(intent);
+                    } else if (data.fileTypte == ListData.VIDEO) {
+                        Intent intent = new Intent();
+                        intent.setClass(mContext, Video.class);
+                        intent.putExtra("path",data.getPath());
+                        startActivity(intent);
                     } else if (data.fileTypte == ListData.FOLDER){
                         openfolder(data.getId());
                     }

@@ -76,12 +76,7 @@ public class MediaProvider extends ContentProvider {
                 "mtime INTEGER," +
                 "_name TEXT," +
                 "_path TEXT NOT NULL," +
-                "album TEXT," +
-                "genre TEXT," +
-                "artist TEXT," +
-                "genre_id INTEGER," +
-                "album_id INTEGER," +
-                "artist_id INTEGER" +
+                "is_favorite INTEGER" +
                 ");";
 
 
@@ -98,7 +93,8 @@ public class MediaProvider extends ContentProvider {
                 "size INTEGER," +
                 "mtime INTEGER," +
                 "_name TEXT," +
-                "_path TEXT NOT NULL" +
+                "_path TEXT NOT NULL," +
+                "is_favorite INTEGER" +
                 ");";
 
 
@@ -165,7 +161,7 @@ public class MediaProvider extends ContentProvider {
         db = dbHelper.getWritableDatabase();//创建数据库
 //        db.enableWriteAheadLogging();
 //        db.setLocale(Locale.CHINESE);
-//        db.enableWriteAheadLogging();
+        db.enableWriteAheadLogging();
         return (db == null)? false:true;
     }
 
@@ -214,6 +210,12 @@ public class MediaProvider extends ContentProvider {
             Log.e(TAG,"open database finish:");
             Trace.endSection();
             return uri;
+        } else if (values.get(NAME).equals("delete database")) {
+            oldVolume = "-1";
+            getContext().deleteDatabase(DATABASE_NAME);
+            DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+            db = dbHelper.getWritableDatabase();//创建数据库
+            return null;
         }
 
         long rowID = db.insert(mediaTable, "", values);
@@ -292,11 +294,11 @@ public class MediaProvider extends ContentProvider {
     public void mediascanner(int isNewVolume){
         Trace.beginSection("mediascanner");
         Log.e(TAG,"mediascanner : "+ isNewVolume);
-        long startTime = System.nanoTime();
-//        String scanPath = "/sdcard/android_ubuntu";
+        long startTime = System.currentTimeMillis();
+        Log.e(TAG,"start scan time : " + (startTime) + " ms");
         scan(scanPath, isNewVolume);
-        long endTime = System.nanoTime();
-        Log.e(TAG,"all scan resume time : " + (endTime-startTime)/1000000.0 + " ms");
+        long endTime = System.currentTimeMillis();
+        Log.e(TAG,"all scan resume time : " + (endTime-startTime) + " ms");
         Trace.endSection();
     }
 

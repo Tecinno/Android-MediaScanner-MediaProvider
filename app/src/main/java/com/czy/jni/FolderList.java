@@ -32,6 +32,8 @@ public class FolderList extends AppCompatActivity {
     final static private int Folder = 0;
     final static private int AudioList = 1;
     final static private int VideoList = 2;
+    final static private int VideoFavoriteList = 3;
+    final static private int audioFavoriteList = 4;
     private TextView listCountText ;
     private ContentResolver contentResolver;//getContentResolver
     private int menuType;
@@ -99,9 +101,19 @@ public class FolderList extends AppCompatActivity {
             a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
             type = ListData.AUDIO;
         }
+        else if (menuType == audioFavoriteList)
+        {
+            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "is_favorite = ?",new String[] {"1"},"_name COLLATE LOCALIZED ASC");
+            type = ListData.AUDIO;
+        }
         else if (menuType == VideoList)
         {
             a = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, null,null,"_name COLLATE LOCALIZED ASC");
+            type = ListData.VIDEO;
+        }
+        else if (menuType == VideoFavoriteList)
+        {
+            a = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, "is_favorite = ?",new String[] {"1"},"_name COLLATE LOCALIZED ASC");
             type = ListData.VIDEO;
         }
         else
@@ -224,11 +236,14 @@ public class FolderList extends AppCompatActivity {
                         intent.putExtra("path",data.getPath());
                         intent.putExtra("id",data.getId());
                         startActivity(intent);
+                        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
                     } else if (data.fileTypte == ListData.VIDEO) {
                         Intent intent = new Intent();
                         intent.setClass(mContext, Video.class);
                         intent.putExtra("path",data.getPath());
+                        intent.putExtra("_id",data.getId());
                         startActivity(intent);
+                        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
                     } else if (data.fileTypte == ListData.FOLDER){
                         openfolder(data.getId());
                     }
@@ -250,6 +265,7 @@ public class FolderList extends AppCompatActivity {
                     intent.setClass(mContext, Menu.class);
 //                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS | Intent.FLAG_RECEIVER_FOREGROUND);
                 startActivity(intent);
+                overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
             } else {
 
                 id = folderidlist.get(folderidlist.size()-1);
@@ -402,5 +418,11 @@ public class FolderList extends AppCompatActivity {
             Trace.endSection();
             return list;
         }
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
 }

@@ -3,9 +3,16 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+<!--        <item name="colorPrimary">@color/colorPrimary</item>-->
+<!--        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
+<!--        <item name="colorAccent">@color/colorAccent</item>-->
+<!--        <item name="android:windowShowWallpaper">true</item>-->
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">true</item>
+        <!--background 透明，这里是自定义了一个color-->
+        <item name="android:windowBackground">@color/transparent</item>
+        <!--设置显示wallpaper，否则会显示出launcher的图标-->
+        <item name="android:windowShowWallpaper">true</item>
     </style>
     <!--弹窗动画-->
     <style name="mystyle" parent="android:Animation">

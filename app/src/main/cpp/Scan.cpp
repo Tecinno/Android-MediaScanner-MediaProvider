@@ -25,7 +25,7 @@ static const char *audioType[] = {".mp3", ".ape", ".flac", ".wav", ".m4a"};
 static const int audioSize = sizeof(audioType) / sizeof(audioType[0]);
 static const int videoSize = sizeof(videoType) / sizeof(videoType[0]);
 static pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
-static bool NEED_RESTRICT_FILE_COUNT = false;
+static bool NEED_RESTRICT_FILE_COUNT = true;
     Scan::Scan(){
     };
     Scan::~Scan(){
@@ -161,22 +161,12 @@ static bool NEED_RESTRICT_FILE_COUNT = false;
                     }
                 }
 
-                //=======================start query parent_id=====================
-                //find folder or file parent folder id,save in parent_id
-                //audio ,video or folder will use it
-                if (firstScan) {
-                    parent_id = getId(dir_entry_parent.abs_file_name_p);
-                    if (parent_id == -1) {
-                        printf("getParentId fail !!!\n");
-                        parent_id = 0;
-                    }
-                }
-                else
-                    parent_id = 0;
-                //=======================end query parent_id=====================
+
 
                 if (type == DT_REG)
                 {
+
+
                     bool findMediaFile = false;
                     const char *nameSuffix = strrchr(dir_entity_p->d_name, '.');
                     if (!nameSuffix)
@@ -194,7 +184,22 @@ static bool NEED_RESTRICT_FILE_COUNT = false;
                                         printf("mdb == NULL when audio scanFile");
                                         return -1;
                                     }
-                                }else if (scanFile(mdb, fileNameStore, audio, parent_id, dirLayer) == true) {
+                                }
+                                //=======================start query parent_id=====================
+                                //find folder or file parent folder id,save in parent_id
+                                //audio ,video or folder will use it
+                                if (firstScan) {
+//                                    printf("fileNameStore : %s",fileNameStore);
+                                    parent_id = getId(dir_entry_parent.abs_file_name_p);
+                                    if (parent_id == -1) {
+                                        printf("getParentId fail !!!\n");
+                                        parent_id = 0;
+                                    }
+                                }
+                                else
+                                    parent_id = 0;
+                                //=======================end query parent_id=====================
+                                if (scanFile(mdb, fileNameStore, audio, parent_id, dirLayer) == true) {
                                     ++audioCount;
                                     // printf("insert sqlite3 %s ,success\n", fileNameStore);
                                 } else
@@ -214,7 +219,22 @@ static bool NEED_RESTRICT_FILE_COUNT = false;
                                         printf("mdb == NULL");
                                         return -1;
                                     }
-                                }else if (scanFile(mdb, fileNameStore, video, parent_id, dirLayer) == true) {
+                                }
+                                //=======================start query parent_id=====================
+                                //find folder or file parent folder id,save in parent_id
+                                //audio ,video or folder will use it
+                                if (firstScan) {
+//                                    printf("fileNameStore : %s",fileNameStore);
+                                    parent_id = getId(dir_entry_parent.abs_file_name_p);
+                                    if (parent_id == -1) {
+                                        printf("getParentId fail !!!\n");
+                                        parent_id = 0;
+                                    }
+                                }
+                                else
+                                    parent_id = 0;
+                                //=======================end query parent_id=====================
+                                if (scanFile(mdb, fileNameStore, video, parent_id, dirLayer) == true) {
                                     ++videoCount;
                                     // printf("insert sqlite3 %s ,success\n", fileNameStore);
                                 } else
@@ -904,9 +924,7 @@ static bool NEED_RESTRICT_FILE_COUNT = false;
         "mtime INTEGER,"\
         "_name TEXT ,"\
         "_path TEXT NOT NULL,"\
-        "album TEXT,"\
-        "genre TEXT,"\
-        "artist TEXT"\
+        "is_favorite INTEGER" \
         ");";
         printf(" begin sqlite3_exec \n");
          rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
@@ -937,7 +955,8 @@ static bool NEED_RESTRICT_FILE_COUNT = false;
         "size INTEGER,"\
         "mtime INTEGER,"\
         "_name TEXT,"\
-        "_path TEXT NOT NULL"\
+        "_path TEXT NOT NULL,"\
+        "is_favorite INTEGER" \
         ");";
         rs = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
         if (rs != SQLITE_OK) {

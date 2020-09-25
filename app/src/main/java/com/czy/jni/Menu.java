@@ -23,6 +23,8 @@ public class Menu extends AppCompatActivity {
     final static private int Folder = 0;
     final static private int AudioList = 1;
     final static private int VideoList = 2;
+    final static private int VideoFavoriteList = 3;
+    final static private int audioFavoriteList = 4;
     private MyBroadcastReceiver broad;
     private IntentFilter intentFilter;
     @Override
@@ -45,27 +47,43 @@ public class Menu extends AppCompatActivity {
         Intent intent = new Intent(this, FolderList.class);
         intent.putExtra("menuType", Folder);
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
 
     public void back_button(View view) {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
 
     public void audiolist_button(View view) {
         Intent intent = new Intent(this, FolderList.class);
         intent.putExtra("menuType", AudioList);
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
     public void videolist_button(View view) {
         Intent intent = new Intent(this, FolderList.class);
         intent.putExtra("menuType", VideoList);
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
-    public void genre_button(View view) {
-        Log.e(TAG, "Menu genre_button ");
-        sendBroad();
-//        show();
+//    public void genre_button(View view) {
+//        Log.e(TAG, "Menu genre_button ");
+//        sendBroad();
+////        show();
+//    }
+    public void audioFavorite_button(View view) {
+        Intent intent = new Intent(this, FolderList.class);
+        intent.putExtra("menuType", audioFavoriteList);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
+    }
+    public void videoFavorite_button(View view) {
+        Intent intent = new Intent(this, FolderList.class);
+        intent.putExtra("menuType", VideoFavoriteList);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
     private void intentRegister() {
         intentFilter = new IntentFilter();
@@ -84,12 +102,7 @@ public class Menu extends AppCompatActivity {
 //            finish();
         }
     }
-//    @Override
-//    public void finish() {
-//        Log.e(TAG, "Menu finish ");
-////        super.finish();
-////        overridePendingTransition(R.style.mystyle, R.style.mystyle);
-//    }
+
     @Override
     protected void onDestroy() {
         Log.e(TAG, "Menu onDestroy ");

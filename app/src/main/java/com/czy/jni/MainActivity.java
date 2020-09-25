@@ -16,6 +16,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -31,6 +32,8 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.os.Trace;
+import android.widget.Toast;
+
 public class MainActivity extends AppCompatActivity {
     final static String TAG = "Scanner";
     private MediaPlayer player = new MediaPlayer();
@@ -92,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("event",1);
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
     //广播测试
     public void sendBroad() {
@@ -204,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
 //        else {
 //            Log.e(TAG, "showAudio cursor is null");
 //        }
-        c.close();
+        if (c != null) c.close();
         Trace.endSection();
     }
 
@@ -229,27 +233,71 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void videoMenu(View view) {
-//        Intent intent = new Intent(this, Video.class);
-//        startActivity(intent);
-//        sendBroad();
-//        showDiaglog();
-    }
+//    public void videoMenu(View view) {
+////        Intent intent = new Intent(this, Video.class);
+////        startActivity(intent);
+////        sendBroad();
+////        showDiaglog();
+//    }
 
 
     public void menu_button(View view) {
         Intent intent = new Intent(this, Menu.class);
-
         startActivity(intent);
+        overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
+    }
+    public void delete_button(View view) {
+        Log.e("Scanner", "============delete_button================ ");
+        Uri music = Uri.parse( "content://media.scan/audio");
+        ContentValues values = new ContentValues();
+        values.put(MediaProvider.NAME, "delete database");
+        getContentResolver().insert(music, values);
+        Toast.makeText(MainActivity.this, "删除完成", Toast.LENGTH_SHORT).show();
+    }
+
+    public void isFavorite_button(View view) {
+        if(audioData.id == -1)
+            return;
+        Uri music = Uri.parse( "content://media.scan/audio");
+        Cursor c = getContentResolver().query(music, new String[]{"is_favorite"}, "_id = ?",new String[]{String.valueOf(audioData.id)},null);
+        Log.e("Scanner", "============isFavorite_button================ ");
+        if (c == null)
+            Log.e(TAG, "c == null ");
+        if (c.moveToFirst()) {
+            do{
+                int oldFavorite = c.getInt(c.getColumnIndex( "is_favorite"));
+                Log.e(TAG,  "id is :"+audioData.id+ ", is_favorite is :" + oldFavorite);
+                ContentValues value = new ContentValues();
+                if (oldFavorite == 1) {
+                    value.put("is_favorite","0");
+                } else {
+                    value.put("is_favorite","1");
+                }
+                getContentResolver().update(music,value,"_id = ?",new String[]{String.valueOf(audioData.id)});
+                if (oldFavorite == 1) {
+                    Toast.makeText(MainActivity.this, "取消收藏", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(MainActivity.this, "添加收藏", Toast.LENGTH_SHORT).show();
+                }
+            } while (c.moveToNext());
+        }
+        if (c != null) c.close();
     }
 
     public void scan_button(View view) {
         Thread mthread = new Thread(new Runnable() {
             @Override
             public  void run(){
-                opendatabase();
-//                myProviderQuery();
-
+            Looper.prepare();
+            opendatabase();
+            Cursor a = getContentResolver().query(Uri.parse( "content://media.scan/audio"), new String[]{"_id"}, null,null,null);
+            Cursor v = getContentResolver().query(Uri.parse( "content://media.scan/video"), new String[]{"_id"}, null,null,null);
+            Cursor d = getContentResolver().query(Uri.parse( "content://media.scan/folder_dir"), new String[]{"_id"}, null,null,null);
+            Toast.makeText(MainActivity.this, "扫描完成", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "音乐："+a.getCount()+",视频："+v.getCount()+"，文件夹："+d.getCount(), Toast.LENGTH_SHORT).show();
+            a.close();v.close();d.close();
+            Looper.loop();
             }
         });mthread.start();
 
@@ -488,6 +536,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG,  "id is :"+v.getInt(v.getColumnIndex( MediaProvider.ID))+ ", name is :" + v.getString(v.getColumnIndex( MediaProvider.NAME)) + ", path is :" + v.getString(v.getColumnIndex( MediaProvider.PATH)));
             } while (v.moveToNext());
         }
+        if (c != null) c.close();
+        if (v != null) v.close();
 
     }
 //    public void mediascanner(){

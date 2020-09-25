@@ -1,2 +1,11 @@
 ninja: Entering directory `F:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\x86_64'
-ninja: no work to do.
+[1/2] Building CXX object CMakeFiles/native-lib.dir/Scan.cpp.o
+F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:206:72: warning: '&&' within '||' [-Wlogical-op-parentheses]
+                    if (!NEED_RESTRICT_FILE_COUNT || videoCount < 9999 && !findMediaFile) {
+                                                  ~~ ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp/Scan.cpp:206:72: note: place parentheses around the '&&' expression to silence this warning
+                    if (!NEED_RESTRICT_FILE_COUNT || videoCount < 9999 && !findMediaFile) {
+                                                                       ^
+                                                     (                                  )
+1 warning generated.
+[2/2] Linking CXX shared library F:\software\android_studio\MediaProvider\MediaScanner\app\build\intermediates\cmake\debug\obj\x86_64\libnative-lib.so

@@ -31,23 +31,35 @@
         android:onClick="videolist_button"
         android:text="所有视频列表" />
 
-    <Button
-        android:id="@+id/button5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="genre_button"
-        android:text="风格" />
+<!--    <Button-->
+<!--        android:id="@+id/button5"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:onClick="genre_button"-->
+<!--        android:text="风格" />-->
 
-    <Button
-        android:id="@+id/button6"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="专辑" />
+<!--    <Button-->
+<!--        android:id="@+id/button6"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="专辑" />-->
 
+<!--    <Button-->
+<!--        android:id="@+id/button7"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="艺术家" />-->
     <Button
-        android:id="@+id/button7"
+        android:id="@+id/button9"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="艺术家" />
+        android:onClick="audioFavorite_button"
+        android:text="歌曲收藏夹" />
+    <Button
+        android:id="@+id/button10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="videoFavorite_button"
+        android:text="视频收藏夹" />
 
 </LinearLayout>

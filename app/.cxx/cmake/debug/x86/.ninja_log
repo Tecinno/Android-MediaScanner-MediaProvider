@@ -1,5 +1,5 @@
 # ninja log v5
-14	441	621638224	CMakeFiles/native-lib.dir/native-lib.cpp.o	2ed1772a67753145
-13	758	621638224	CMakeFiles/native-lib.dir/Scan.cpp.o	8b58d351e12e30d
-0	2183	621638226	CMakeFiles/native-lib.dir/sqlite3.c.o	29527bffb5228761
-2184	2378	621638226	F:/software/android_studio/MediaProvider/MediaScanner/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so	67a942096248836
+20622	53009	631691375	CMakeFiles/native-lib.dir/native-lib.cpp.o	b186731aa195ecab
+18843	54639	631691377	CMakeFiles/native-lib.dir/Scan.cpp.o	bb92f72e0e7021aa
+6	62386	631691385	CMakeFiles/native-lib.dir/sqlite3.c.o	bd78fddb77b20c02
+62386	64382	631691387	C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so	fa516e62b76cdc86

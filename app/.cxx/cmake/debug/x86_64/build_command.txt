@@ -1,20 +1,20 @@
-Executable : C:\Users\1\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\cmake.exe
+Executable : C:\Users\liujieqin\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\cmake.exe
 arguments : 
--HF:\software\android_studio\MediaProvider\MediaScanner\app\src\main\cpp
--DCMAKE_FIND_ROOT_PATH=F:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\prefab\x86_64\prefab
+-HC:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\src\main\cpp
+-DCMAKE_FIND_ROOT_PATH=C:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\.cxx\cmake\debug\prefab\x86_64\prefab
 -DCMAKE_BUILD_TYPE=Debug
--DCMAKE_TOOLCHAIN_FILE=C:\Users\1\AppData\Local\Android\Sdk\ndk\21.0.6113669\build\cmake\android.toolchain.cmake
+-DCMAKE_TOOLCHAIN_FILE=C:\Users\liujieqin\AppData\Local\Android\Sdk\ndk\21.0.6113669\build\cmake\android.toolchain.cmake
 -DANDROID_ABI=x86_64
--DANDROID_NDK=C:\Users\1\AppData\Local\Android\Sdk\ndk\21.0.6113669
+-DANDROID_NDK=C:\Users\liujieqin\AppData\Local\Android\Sdk\ndk\21.0.6113669
 -DANDROID_PLATFORM=android-24
 -DCMAKE_ANDROID_ARCH_ABI=x86_64
--DCMAKE_ANDROID_NDK=C:\Users\1\AppData\Local\Android\Sdk\ndk\21.0.6113669
+-DCMAKE_ANDROID_NDK=C:\Users\liujieqin\AppData\Local\Android\Sdk\ndk\21.0.6113669
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
--DCMAKE_LIBRARY_OUTPUT_DIRECTORY=F:\software\android_studio\MediaProvider\MediaScanner\app\build\intermediates\cmake\debug\obj\x86_64
--DCMAKE_MAKE_PROGRAM=C:\Users\1\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=C:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\build\intermediates\cmake\debug\obj\x86_64
+-DCMAKE_MAKE_PROGRAM=C:\Users\liujieqin\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
 -DCMAKE_SYSTEM_NAME=Android
 -DCMAKE_SYSTEM_VERSION=24
--BF:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\x86_64
+-BC:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\.cxx\cmake\debug\x86_64
 -GNinja
 jvmArgs : 
 

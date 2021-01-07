@@ -1,19 +1,19 @@
 {
   "buildFiles": [
-    "C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\android.toolchain.cmake",
-    "C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\platforms.cmake",
-    "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt"
+    "C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\android.toolchain.cmake",
+    "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\platforms.cmake"
   ],
   "cleanCommands": [
-    "C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\.cxx\\cmake\\debug\\x86_64\" clean"
+    "C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\.cxx\\cmake\\debug\\x86_64\" clean"
   ],
-  "buildTargetsCommand": "C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe  -C \"F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\.cxx\\cmake\\debug\\x86_64\" {LIST_OF_TARGETS_TO_BUILD}",
+  "buildTargetsCommand": "C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe  -C \"C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\.cxx\\cmake\\debug\\x86_64\" {LIST_OF_TARGETS_TO_BUILD}",
   "libraries": {
     "native-lib-Debug-x86_64": {
       "artifactName": "native-lib",
-      "buildCommand": "C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\.cxx\\cmake\\debug\\x86_64\" native-lib",
+      "buildCommand": "C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\.cxx\\cmake\\debug\\x86_64\" native-lib",
       "abi": "x86_64",
-      "output": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\build\\intermediates\\cmake\\debug\\obj\\x86_64\\libnative-lib.so",
+      "output": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\build\\intermediates\\cmake\\debug\\obj\\x86_64\\libnative-lib.so",
       "runtimeFiles": []
     }
   }

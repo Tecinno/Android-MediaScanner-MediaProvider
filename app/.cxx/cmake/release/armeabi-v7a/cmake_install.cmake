@@ -1,4 +1,4 @@
-# Install script for directory: F:/software/android_studio/MediaProvider/MediaScanner/app/src/main/cpp
+# Install script for directory: C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/src/main/cpp
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "F:/software/android_studio/MediaProvider/MediaScanner/app/.cxx/cmake/release/armeabi-v7a/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/.cxx/cmake/release/armeabi-v7a/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

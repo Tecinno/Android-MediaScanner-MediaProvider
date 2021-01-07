@@ -1,2 +1,2 @@
-ninja: Entering directory `F:\software\android_studio\MediaProvider\MediaScanner\app\.cxx\cmake\debug\arm64-v8a'
+ninja: Entering directory `C:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\.cxx\cmake\debug\arm64-v8a'
 ninja: no work to do.

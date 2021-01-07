@@ -15,15 +15,23 @@
         android:theme="@style/AppTheme"
         >
 
-        <activity android:name=".Menu"></activity>
+        <activity android:name=".Menu"
+            android:launchMode="singleTop"
+            />
         <activity
-            android:name=".Video"/>
+            android:name=".Video"
+            android:launchMode="singleTop"
+            />
 <!--            android:parentActivityName=".MainActivity" -->
 
         <activity
-            android:name=".FolderList"/>
+            android:name=".FolderList"
+            android:launchMode="singleTop"
+            />
 <!--            android:parentActivityName=".MainActivity" -->
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:launchMode="singleTask"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

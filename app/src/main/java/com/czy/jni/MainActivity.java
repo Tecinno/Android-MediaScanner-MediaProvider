@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e(TAG, "onCreate");
+        Log.i(TAG, "onCreate");
 
         setContentView(R.layout.activity_main);
         findViews();
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context content, Intent intent){
             final String action = intent.getAction();
-            Log.e(TAG, "MainActivity MyBroadcastReceiver + "+ action);
+            Log.i(TAG, "MainActivity MyBroadcastReceiver + "+ action);
 //            startMyActivity();
 //            showDiaglog();
         }
@@ -102,14 +102,14 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setAction("android.net.conn.media");
         sendBroadcast(intent);
-        Log.e(TAG,"sendBroad OK");
+        Log.i(TAG,"sendBroad OK");
     }
     //弹窗测试
     private void showDiaglog() {
         HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
         map.put(0,0);
         int a = map.get(1).intValue();
-        Log.e(TAG, "MainActivity showDiaglog   ");
+        Log.i(TAG, "MainActivity showDiaglog   ");
         Dialog dialog = new Dialog(this);
         //去掉标题线
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         window.setWindowAnimations(R.style.mystyle);  //添加动画
     }
     public void getPermission(){
-        Log.e(TAG, "getPermission");
+        Log.i(TAG, "getPermission");
         int permissionread = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
         int permissionwrite = this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void showAudio(PlayType type) {
         Trace.beginSection("showAudio");
-        Log.e(TAG, "showAudio");
+        Log.i(TAG, "showAudio");
         Uri music = Uri.parse( "content://media.scan/audio");
         Cursor c;
         music = music.buildUpon().appendQueryParameter("limit", "1").build();
@@ -189,9 +189,9 @@ public class MainActivity extends AppCompatActivity {
         }
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
-            Log.e(TAG, "showAudio try , path : "+audioData.path);
+            Log.i(TAG, "showAudio try , path : "+audioData.path);
             mmr.setDataSource(audioData.path);
-            Log.e(TAG, "showAudio after setDataSource "+audioData.path);
+            Log.i(TAG, "showAudio after setDataSource "+audioData.path);
             audioData.title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
             titleText.setText(audioData.title == null ? audioData.name : audioData.title);
             audioData.artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
@@ -200,14 +200,10 @@ public class MainActivity extends AppCompatActivity {
             albumText.setText(audioData.album);
             audioData.genre = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE);
             genreText.setText(audioData.genre);
-            Log.e(TAG, "title : " +  audioData.title + " ,ID :" + audioData.id + " ,PATH : "+audioData.path+" , artist : "+audioData.artist+" , album : "+audioData.album+" , genre : "+audioData.genre);
+            Log.i(TAG, "title : " +  audioData.title + " ,ID :" + audioData.id + " ,PATH : "+audioData.path+" , artist : "+audioData.artist+" , album : "+audioData.album+" , genre : "+audioData.genre);
         }catch (Exception e) {
             Log.e(TAG, "setDataSource error : " + e);
         }
-
-//        else {
-//            Log.e(TAG, "showAudio cursor is null");
-//        }
         if (c != null) c.close();
         Trace.endSection();
     }
@@ -233,21 +229,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    public void videoMenu(View view) {
-////        Intent intent = new Intent(this, Video.class);
-////        startActivity(intent);
-////        sendBroad();
-////        showDiaglog();
-//    }
-
-
     public void menu_button(View view) {
         Intent intent = new Intent(this, Menu.class);
         startActivity(intent);
         overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
     }
     public void delete_button(View view) {
-        Log.e("Scanner", "============delete_button================ ");
+        Log.i("Scanner", "============delete_button================ ");
         Uri music = Uri.parse( "content://media.scan/audio");
         ContentValues values = new ContentValues();
         values.put(MediaProvider.NAME, "delete database");
@@ -260,13 +248,13 @@ public class MainActivity extends AppCompatActivity {
             return;
         Uri music = Uri.parse( "content://media.scan/audio");
         Cursor c = getContentResolver().query(music, new String[]{"is_favorite"}, "_id = ?",new String[]{String.valueOf(audioData.id)},null);
-        Log.e("Scanner", "============isFavorite_button================ ");
+        Log.i("Scanner", "============isFavorite_button================ ");
         if (c == null)
             Log.e(TAG, "c == null ");
         if (c.moveToFirst()) {
             do{
                 int oldFavorite = c.getInt(c.getColumnIndex( "is_favorite"));
-                Log.e(TAG,  "id is :"+audioData.id+ ", is_favorite is :" + oldFavorite);
+                Log.i(TAG,  "id is :"+audioData.id+ ", is_favorite is :" + oldFavorite);
                 ContentValues value = new ContentValues();
                 if (oldFavorite == 1) {
                     value.put("is_favorite","0");
@@ -303,9 +291,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void back_button(View view) {
+        Log.i(TAG, " back_button");
+        finish();
+    }
     //打开数据库，开始扫描
     private void opendatabase() {
-        Log.e("MainThread", " myProviderInsert");
+        Log.i(TAG, " myProviderInsert");
         ContentValues values = new ContentValues();
         String URL;
         URL = "content://media.scan/audio";
@@ -352,7 +344,6 @@ public class MainActivity extends AppCompatActivity {
             isChanging=false;
 
         }
-
     }
     public void play() {
         if (audioData.path == null) {
@@ -364,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
         }
         File file = new File(audioData.path);
         if (file.exists()) {
-            Log.e(TAG, "file exist : " + file);
+            Log.i(TAG, "file exist : " + file);
             if (player != null && !ifplay) {
                 play_pause.setText("暂停");
                 if (!iffirst) {
@@ -405,12 +396,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void play_button(View view) {
-        Log.e(TAG, " play_pause_button");
+        Log.i(TAG, " play_pause_button");
         play();
     }
 
     public void next_button(View view) {
-        Log.e(TAG, " next_button");
+        Log.i(TAG, " next_button");
         playnext();
     }
     private void playnext() {
@@ -419,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "MyClick next audioData.path is null");
             return;
         }else {
-            Log.e(TAG, "MyClick next audioData.path is "+ audioData.path);
+            Log.i(TAG, "MyClick next audioData.path is "+ audioData.path);
         }
         File file = new File(audioData.path);
         if (!file.exists()) {
@@ -459,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
         play_pause.setText("暂停");
     }
     public void last_button(View view) {
-        Log.e(TAG, " last_button");
+        Log.i(TAG, " last_button");
         playlast();
     }
     private void playlast() {
@@ -468,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "MyClick last audioData.path is null");
             return;
         } else {
-            Log.e(TAG, "MyClick last audioData.path is "+ audioData.path);
+            Log.i(TAG, "MyClick last audioData.path is "+ audioData.path);
         }
         File file = new File(audioData.path);
         if (!file.exists()) {
@@ -510,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
         play_pause.setText("暂停");
     }
     private void myProviderQuery() {
-        Log.e(TAG, " myProviderQuery");
+        Log.i(TAG, " myProviderQuery");
         String URL = "content://media.scan/audio";
         String URLV = "content://media.scan/video";
         Uri music = Uri.parse(URL);
@@ -519,33 +510,27 @@ public class MainActivity extends AppCompatActivity {
 
         Cursor c = getContentResolver().query(music, null, null,null,null);
         Cursor v = getContentResolver().query(video, null, null,null,null);
-        Log.e("query", "============audio================ ");
+        Log.i(TAG, "============audio================ ");
         if (c == null)
             Log.e(TAG, "c == null ");
         long  startTime = System.currentTimeMillis();
         if (c.moveToFirst()) {
             do{
-                Log.e(TAG,  "id is :"+c.getInt(c.getColumnIndex( MediaProvider.ID))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
+                Log.i(TAG,  "id is :"+c.getInt(c.getColumnIndex( MediaProvider.ID))+ ", name is :" + c.getString(c.getColumnIndex( MediaProvider.NAME)) + ", path is :" + c.getString(c.getColumnIndex( MediaProvider.PATH)));
             } while (c.moveToNext());
         }
-        Log.e(TAG, "============video================ ");
+        Log.i(TAG, "============video================ ");
         if (v == null)
             Log.e(TAG, "v == null ");
         if (v.moveToFirst()) {
             do{
-                Log.e(TAG,  "id is :"+v.getInt(v.getColumnIndex( MediaProvider.ID))+ ", name is :" + v.getString(v.getColumnIndex( MediaProvider.NAME)) + ", path is :" + v.getString(v.getColumnIndex( MediaProvider.PATH)));
+                Log.i(TAG,  "id is :"+v.getInt(v.getColumnIndex( MediaProvider.ID))+ ", name is :" + v.getString(v.getColumnIndex( MediaProvider.NAME)) + ", path is :" + v.getString(v.getColumnIndex( MediaProvider.PATH)));
             } while (v.moveToNext());
         }
         if (c != null) c.close();
         if (v != null) v.close();
 
     }
-//    public void mediascanner(){
-//        long startTime = System.nanoTime();
-//        scan(scanPath);
-//        long endTime = System.nanoTime();
-//        Log.e(TAG,"scan resume time : " + (endTime-startTime));
-//    }
 
     protected void onPause() {
         if(player != null){
@@ -572,15 +557,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        Log.e(TAG, "MainActivity onDestroy ");
+        Log.i(TAG, "MainActivity onDestroy ");
         unregisterReceiver(broad);
         super.onDestroy();
     }
-
-
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-//    public native int[] scan(String title);
 }

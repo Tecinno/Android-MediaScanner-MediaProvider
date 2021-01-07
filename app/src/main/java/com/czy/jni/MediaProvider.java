@@ -16,6 +16,7 @@ import android.system.Os;
 import android.util.Log;
 import android.os.storage.StorageVolume;
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 import android.os.Trace;
 public class MediaProvider extends ContentProvider {
@@ -24,7 +25,7 @@ public class MediaProvider extends ContentProvider {
         System.loadLibrary("native-lib");
     }
 //    static final String scanPath = "/udisk";//sdcard/android_ubuntu  /udisk
-    static final String scanPath = "/sdcard";//sdcard/android_ubuntu  /udisk
+    static final String scanPath = "/storage";//sdcard/android_ubuntu  /udisk /storage/1A10-E642 0E02-1009
     static final String ACTION_MEDIA_MOUNTED = "android.intent.action.MEDIA_MOUNTED";
     static final String PROVIDER_NAME = "media.scan";
     static final String AUDIO_STRING_URL = "content://" + PROVIDER_NAME + "/audio";
@@ -181,16 +182,36 @@ public class MediaProvider extends ContentProvider {
         }
 
         if (values.get(NAME).equals("open database")) {
-            Log.e(TAG,"open database start:");
+            Log.i(TAG,"open database start:");
             StorageManager storageManager = (StorageManager) getContext().getSystemService(Context.STORAGE_SERVICE);
-            File path = new File(scanPath);
+            List<StorageVolume> volumeInfos = storageManager.getStorageVolumes();
+            Log.i(TAG,"volumeInfos : "+volumeInfos.toString());
+            String volumeInfoId = null;
+            for (int i = 0; i < volumeInfos.size(); ++i) {
+                if (volumeInfos.get(i).getUuid() != null) {
+                    volumeInfoId = volumeInfos.get(i).getUuid();
+                    Log.i(TAG,"get first external volume id  : "+volumeInfoId);
+                }
+            }
+            if (volumeInfoId == null) {
+                Log.e(TAG,"no udisk");
+                return null;
+            }
+
+            //获取外部第一个存储设备id，有可能不是USB，如果不对请自行修改。
+            File path = new File(scanPath + "/"+volumeInfoId);
             int isNewVolume = 0;
             if (path != null) {
                 final StorageVolume volumeInfo = storageManager.getStorageVolume(path);
+
+                if (volumeInfo == null) {
+                    Log.e(TAG,"volumeInfo is null ,path : "+path);
+                    return null;
+                }
                 String volumeId = volumeInfo.getUuid() == null ? "001" : volumeInfo.getUuid();
                 //判断是不是上次插入的设备
                 if(oldVolume.equals(volumeId)) {
-                    Log.e(TAG,"old volume : "+ volumeId);
+                    Log.i(TAG,"old volume : "+ volumeId + ", path : "+path);
                 } else{
                     oldVolume = volumeId;
                     getContext().deleteDatabase(DATABASE_NAME);
@@ -198,16 +219,16 @@ public class MediaProvider extends ContentProvider {
                     db = dbHelper.getWritableDatabase();//创建数据库
                     if(db != null) {
                         isNewVolume = 1;
-                        Log.e(TAG,"delete old db and creat new db sucess ");
+                        Log.i(TAG,"delete old db and creat new db sucess ");
                     }
-                    Log.e(TAG,"new volume : "+ volumeId);
+                    Log.i(TAG,"new volume : "+ volumeId + ", path : "+path);
                 }
                 //开始扫描
-                mediascanner(isNewVolume);
+                mediascanner(isNewVolume, path.toString());
             } else
                 Log.e(TAG,"path is null : "+ path);
 
-            Log.e(TAG,"open database finish:");
+            Log.i(TAG,"open database finish:");
             Trace.endSection();
             return uri;
         } else if (values.get(NAME).equals("delete database")) {
@@ -219,7 +240,7 @@ public class MediaProvider extends ContentProvider {
         }
 
         long rowID = db.insert(mediaTable, "", values);
-        Log.e(TAG,"insert success rowID :" + rowID);
+        Log.i(TAG,"insert success rowID :" + rowID);
 
         if (rowID > 0)
         {
@@ -291,14 +312,14 @@ public class MediaProvider extends ContentProvider {
         }
         return mediaTable;
     }
-    public void mediascanner(int isNewVolume){
+    public void mediascanner(int isNewVolume, String paht){
         Trace.beginSection("mediascanner");
-        Log.e(TAG,"mediascanner : "+ isNewVolume);
+        Log.i(TAG,"mediascanner : "+ isNewVolume);
         long startTime = System.currentTimeMillis();
-        Log.e(TAG,"start scan time : " + (startTime) + " ms");
-        scan(scanPath, isNewVolume);
+        Log.i(TAG,"start scan time : " + (startTime) + " ms");
+        scan(paht, isNewVolume);
         long endTime = System.currentTimeMillis();
-        Log.e(TAG,"all scan resume time : " + (endTime-startTime) + " ms");
+        Log.i(TAG,"all scan resume time : " + (endTime-startTime) + " ms");
         Trace.endSection();
     }
 

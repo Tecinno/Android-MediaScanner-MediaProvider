@@ -2,31 +2,31 @@
   {
     "level": "INFO",
     "message": "Start JSON generation. Platform version: 24 min SDK version: arm64-v8a",
-    "file": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|arm64-v8a"
   },
   {
     "level": "INFO",
     "message": "Trying to locate CMake in local SDK repository.",
-    "file": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|arm64-v8a"
   },
   {
     "level": "INFO",
-    "message": "- CMake found in SDK at \u0027C:\\Users\\1\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\u0027 had version \u00273.10.2\u0027",
-    "file": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "message": "- CMake found in SDK at \u0027C:\\Users\\liujieqin\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\u0027 had version \u00273.10.2\u0027",
+    "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|arm64-v8a"
   },
   {
     "level": "INFO",
-    "message": "JSON \u0027F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\.cxx\\cmake\\debug\\arm64-v8a\\android_gradle_build.json\u0027 was up-to-date",
-    "file": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "message": "JSON \u0027C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\.cxx\\cmake\\debug\\arm64-v8a\\android_gradle_build.json\u0027 was up-to-date",
+    "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|arm64-v8a"
   },
   {
     "level": "INFO",
     "message": "JSON generation completed without problems",
-    "file": "F:\\software\\android_studio\\MediaProvider\\MediaScanner\\app\\src\\main\\cpp\\CMakeLists.txt",
+    "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|arm64-v8a"
   }
 ]

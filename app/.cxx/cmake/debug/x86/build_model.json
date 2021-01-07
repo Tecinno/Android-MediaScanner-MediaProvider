@@ -1,6 +1,6 @@
 {
   "abi": "X86",
-  "abiPlatformVersion": 24,
+  "abiPlatformVersion": 26,
   "buildSettings": {
     "environmentVariables": []
   },
@@ -41,7 +41,7 @@
         },
         {
           "name": "ANDROID_PLATFORM",
-          "value": "android-24"
+          "value": "android-26"
         },
         {
           "name": "CMAKE_ANDROID_ARCH_ABI",
@@ -69,7 +69,7 @@
         },
         {
           "name": "CMAKE_SYSTEM_VERSION",
-          "value": "24"
+          "value": "26"
         }
       ]
     }
@@ -170,7 +170,6 @@
       "project": {
         "compilerSettingsCacheFolder": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\.cxx",
         "cxxFolder": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\.cxx",
-        "ideBuildTargetAbi": "x86",
         "isBuildOnlyTargetAbiEnabled": true,
         "isCmakeBuildCohabitationEnabled": false,
         "isNativeCompilerSettingsCacheEnabled": false,
@@ -194,7 +193,10 @@
     "objFolder": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\build\\intermediates\\cmake\\debug\\obj",
     "variantName": "debug",
     "validAbiList": [
-      "X86"
+      "ARMEABI_V7A",
+      "ARM64_V8A",
+      "X86",
+      "X86_64"
     ],
     "prefabDirectory": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\.cxx\\cmake\\debug\\prefab",
     "prefabPackageDirectoryList": []

@@ -21,7 +21,7 @@ ANDROID_ABI:UNINITIALIZED=x86_64
 ANDROID_NDK:UNINITIALIZED=C:\Users\liujieqin\AppData\Local\Android\Sdk\ndk\21.0.6113669
 
 //No help, variable specified on the command line.
-ANDROID_PLATFORM:UNINITIALIZED=android-24
+ANDROID_PLATFORM:UNINITIALIZED=android-26
 
 //No help, variable specified on the command line.
 CMAKE_ANDROID_ARCH_ABI:UNINITIALIZED=x86_64
@@ -202,7 +202,7 @@ CMAKE_STRIP:FILEPATH=C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.61136
 CMAKE_SYSTEM_NAME:UNINITIALIZED=Android
 
 //No help, variable specified on the command line.
-CMAKE_SYSTEM_VERSION:UNINITIALIZED=24
+CMAKE_SYSTEM_VERSION:UNINITIALIZED=26
 
 //The CMake toolchain file
 CMAKE_TOOLCHAIN_FILE:FILEPATH=C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.6113669/build/cmake/android.toolchain.cmake
@@ -220,10 +220,10 @@ Project_BINARY_DIR:STATIC=C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaSc
 Project_SOURCE_DIR:STATIC=C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/src/main/cpp
 
 //Path to a library.
-log-lib:FILEPATH=C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/x86_64-linux-android/24/liblog.so
+log-lib:FILEPATH=C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/x86_64-linux-android/26/liblog.so
 
 //Dependencies for the target
-native-lib_LIB_DEPENDS:STATIC=general;C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/x86_64-linux-android/24/liblog.so;
+native-lib_LIB_DEPENDS:STATIC=general;C:/Users/liujieqin/AppData/Local/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/x86_64-linux-android/26/liblog.so;
 
 
 ########################

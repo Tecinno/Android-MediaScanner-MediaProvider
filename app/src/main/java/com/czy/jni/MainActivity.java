@@ -4,7 +4,9 @@ import androidx.appcompat.app.AppCompatActivity;
 //import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
+import android.app.ActivityOptions;
 import android.app.Dialog;
+import android.app.Presentation;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,12 +14,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.hardware.display.DisplayManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.media.MediaRouter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -45,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
     private Timer mTimer;
     private TimerTask mTimerTask;
     private boolean isChanging=false;//互斥变量，防止定时器与SeekBar拖动时进度冲突
-    private CurrentAudioData audioData;
-    private CurrentVideoData videoData;
+    public static CurrentAudioData audioData;
+    public static CurrentVideoData videoData;
     private TextView titleText ;
     private TextView genreText ;
     private TextView albumText ;
@@ -63,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
+        Toast.makeText(this, "onCreate", Toast.LENGTH_SHORT).show();
 
         setContentView(R.layout.activity_main);
         findViews();
@@ -86,8 +92,6 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context content, Intent intent){
             final String action = intent.getAction();
             Log.i(TAG, "MainActivity MyBroadcastReceiver + "+ action);
-//            startMyActivity();
-//            showDiaglog();
         }
     }
     //启动测试
@@ -106,9 +110,6 @@ public class MainActivity extends AppCompatActivity {
     }
     //弹窗测试
     private void showDiaglog() {
-        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
-        map.put(0,0);
-        int a = map.get(1).intValue();
         Log.i(TAG, "MainActivity showDiaglog   ");
         Dialog dialog = new Dialog(this);
         //去掉标题线
@@ -126,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         window.setAttributes(lp);
         window.setWindowAnimations(R.style.mystyle);  //添加动画
     }
+
     public void getPermission(){
         Log.i(TAG, "getPermission");
         int permissionread = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -322,6 +324,9 @@ public class MainActivity extends AppCompatActivity {
     }
     //当前视频信息存储
     class CurrentVideoData {
+        public CurrentVideoData() {
+            id = -1;
+        }
         public int id;
         public String path;
     }
@@ -561,4 +566,5 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(broad);
         super.onDestroy();
     }
+
 }

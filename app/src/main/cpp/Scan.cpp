@@ -54,7 +54,7 @@ static bool NEED_RESTRICT_FILE_COUNT = true;
      *          2:跳过
      */
     int Scan::ProcessDirectory(const char *path, int isNewVol, bool isfirstScan) {
-        printf("ProcessDirectory %d", isNewVol);
+        printf("ProcessDirectory %d , path : %s", isNewVol, path);
         //firstScan是true就是构建快表
         firstScan = isfirstScan;
         clock_t  start = clock();

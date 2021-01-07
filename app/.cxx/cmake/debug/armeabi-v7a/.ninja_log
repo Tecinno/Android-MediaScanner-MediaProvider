@@ -1,0 +1,5 @@
+# ninja log v5
+5	2130	631705232	CMakeFiles/native-lib.dir/native-lib.cpp.o	50b749d5c82f8b84
+3	2815	631705233	CMakeFiles/native-lib.dir/Scan.cpp.o	80837bc3bb0cc5c6
+1	5688	631705235	CMakeFiles/native-lib.dir/sqlite3.c.o	f1e2f62266c7c4ce
+5689	6294	631705236	C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libnative-lib.so	8b1f7d16e7a41e4a

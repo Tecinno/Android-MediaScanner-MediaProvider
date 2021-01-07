@@ -93,8 +93,9 @@ public class FolderList extends AppCompatActivity {
                 c.close();
             }
         }
-        Log.i(TAG, "============audio================ ");
-        Cursor a;
+        Log.i(TAG, "============audio & video================ ");
+        Cursor a = null;
+        Cursor v = null;
         int type;
         if (menuType == AudioList) //判断类型，防止数据中parent_id为null
         {
@@ -118,8 +119,9 @@ public class FolderList extends AppCompatActivity {
         }
         else
         {
-            a = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
-            type = ListData.AUDIO;
+            a = getContentResolver().query(audio, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
+            v = getContentResolver().query(video, new String[]{"_id" , "_name", "_path"}, "parent_id = ?",new String[] {parent_id},"_name COLLATE LOCALIZED ASC");
+            type = ListData.MediaFix;
         }
         if (a == null)
         {
@@ -127,8 +129,9 @@ public class FolderList extends AppCompatActivity {
             return null;
         }
         if (a.moveToFirst()) {
+            type = type == ListData.MediaFix ? ListData.AUDIO : type;
             do{
-//                Log.i(TAG,  "id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
+                Log.i(TAG,  "audio id is :"+a.getInt(a.getColumnIndex( MediaProvider.ID))+ ", name is :" + a.getString(a.getColumnIndex( MediaProvider.NAME)) + ", path is :" + a.getString(a.getColumnIndex( MediaProvider.PATH)));
                 ListData fol = new ListData(type);
                 fol.setId(a.getInt(a.getColumnIndex( "_id")));
                 fol.setName(a.getString(a.getColumnIndex( MediaProvider.NAME)));
@@ -136,11 +139,26 @@ public class FolderList extends AppCompatActivity {
                 if(fol.getName() == null && fol.getPath() != null) {
                     fol.setName(fol.getPath().substring(fol.getPath().lastIndexOf("/")+1));
                 }
-//                fol.fileTypte = ListData.AUDIO;
                 list.add(fol);
 //                Log.i(TAG, "  list count "+list.size());
             } while (a.moveToNext());
             a.close();
+        }
+
+        if (type == ListData.MediaFix && v != null && v.moveToFirst()) {
+            type = ListData.VIDEO;
+            do{
+                Log.i(TAG,  "video id is :"+v.getInt(v.getColumnIndex( MediaProvider.ID))+ ", name is :" + v.getString(v.getColumnIndex( MediaProvider.NAME)) + ", path is :" + v.getString(v.getColumnIndex( MediaProvider.PATH)));
+                ListData fol = new ListData(type);
+                fol.setId(v.getInt(v.getColumnIndex( "_id")));
+                fol.setName(v.getString(v.getColumnIndex( MediaProvider.NAME)));
+                fol.setPath(v.getString(v.getColumnIndex( MediaProvider.PATH)));
+                if(fol.getName() == null && fol.getPath() != null) {
+                    fol.setName(fol.getPath().substring(fol.getPath().lastIndexOf("/")+1));
+                }
+                list.add(fol);
+            } while (v.moveToNext());
+            v.close();
         }
         listCountText.setText("list count : " + list.size());
         Trace.endSection();
@@ -243,6 +261,7 @@ public class FolderList extends AppCompatActivity {
                         intent.putExtra("path",data.getPath());
                         intent.putExtra("_id",data.getId());
                         startActivity(intent);
+
                         overridePendingTransition(R.anim.fate_enter,R.anim.fate_out);
                     } else if (data.fileTypte == ListData.FOLDER){
                         openfolder(data.getId());

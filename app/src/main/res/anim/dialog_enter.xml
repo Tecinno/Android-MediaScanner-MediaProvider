@@ -5,7 +5,7 @@
 <!--        android:fromYDelta="100%"-->
 <!--        android:toYDelta="0" />-->
     <translate
-        android:duration="2000"
+        android:duration="200"
         android:fromYDelta="100%p"
         android:fromXDelta="100%p"
         android:toYDelta="0"

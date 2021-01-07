@@ -4,6 +4,7 @@ public class ListData {
     final static public int AUDIO = 1;
     final static public int FOLDER = 0;
     final static public int VIDEO = 2;
+    final static public int MediaFix = 3;
     private int id;
     private String name;
     private String path;

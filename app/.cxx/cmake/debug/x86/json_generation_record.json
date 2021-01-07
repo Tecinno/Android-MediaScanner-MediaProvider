@@ -1,7 +1,7 @@
 [
   {
     "level": "INFO",
-    "message": "Start JSON generation. Platform version: 24 min SDK version: x86",
+    "message": "Start JSON generation. Platform version: 26 min SDK version: x86",
     "file": "C:\\Users\\liujieqin\\Desktop\\gitbubclone\\Android-MediaScanner-MediaProvider\\app\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "debug|x86"
   },

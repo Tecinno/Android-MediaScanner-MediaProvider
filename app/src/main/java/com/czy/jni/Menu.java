@@ -31,9 +31,7 @@ public class Menu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.menu);
-        //注册广播
         intentRegister();
-//        show();
     }
 
     //广播测试

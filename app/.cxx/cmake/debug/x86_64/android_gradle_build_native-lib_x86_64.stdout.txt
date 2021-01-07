@@ -1,0 +1,13 @@
+ninja: Entering directory `C:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\.cxx\cmake\debug\x86_64'
+[1/4] Building CXX object CMakeFiles/native-lib.dir/native-lib.cpp.o
+[2/4] Building CXX object CMakeFiles/native-lib.dir/Scan.cpp.o
+C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/src/main/cpp/Scan.cpp:211:72: warning: '&&' within '||' [-Wlogical-op-parentheses]
+                    if (!NEED_RESTRICT_FILE_COUNT || videoCount < 9999 && !findMediaFile) {
+                                                  ~~ ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+C:/Users/liujieqin/Desktop/gitbubclone/Android-MediaScanner-MediaProvider/app/src/main/cpp/Scan.cpp:211:72: note: place parentheses around the '&&' expression to silence this warning
+                    if (!NEED_RESTRICT_FILE_COUNT || videoCount < 9999 && !findMediaFile) {
+                                                                       ^
+                                                     (                                  )
+1 warning generated.
+[3/4] Building C object CMakeFiles/native-lib.dir/sqlite3.c.o
+[4/4] Linking CXX shared library C:\Users\liujieqin\Desktop\gitbubclone\Android-MediaScanner-MediaProvider\app\build\intermediates\cmake\debug\obj\x86_64\libnative-lib.so

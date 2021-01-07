@@ -312,12 +312,12 @@ public class MediaProvider extends ContentProvider {
         }
         return mediaTable;
     }
-    public void mediascanner(int isNewVolume, String paht){
+    public void mediascanner(int isNewVolume, String path){
         Trace.beginSection("mediascanner");
         Log.i(TAG,"mediascanner : "+ isNewVolume);
         long startTime = System.currentTimeMillis();
         Log.i(TAG,"start scan time : " + (startTime) + " ms");
-        scan(paht, isNewVolume);
+        scan(path, isNewVolume);
         long endTime = System.currentTimeMillis();
         Log.i(TAG,"all scan resume time : " + (endTime-startTime) + " ms");
         Trace.endSection();

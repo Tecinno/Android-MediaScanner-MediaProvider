@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name= "android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name= "android.permission.SYSTEM_OVERLAY_WINDOW"  />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/timg"
@@ -20,15 +23,13 @@
             />
         <activity
             android:name=".Video"
-            android:launchMode="singleTop"
+            android:launchMode="standard"
             />
-<!--            android:parentActivityName=".MainActivity" -->
-
         <activity
             android:name=".FolderList"
             android:launchMode="singleTop"
             />
-<!--            android:parentActivityName=".MainActivity" -->
+
         <activity android:name=".MainActivity"
             android:launchMode="singleTask"
             >
@@ -43,27 +44,6 @@
             android:name=".MediaProvider"
             android:authorities="media.scan"
             android:exported="true" />
-
-<!--        <receiver android:name="Menu$MyBroadcastReceiver">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MEDIA_MOUNTED" />-->
-<!--                <data android:scheme="file" />-->
-<!--            </intent-filter>-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />-->
-<!--                <data android:scheme="file" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
-<!--        <receiver android:name="MainActivity$MyBroadcastReceiver">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MEDIA_MOUNTED" />-->
-<!--                <data android:scheme="file" />-->
-<!--            </intent-filter>-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />-->
-<!--                <data android:scheme="file" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
     </application>
 
 </manifest>
